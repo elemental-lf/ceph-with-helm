@@ -305,6 +305,83 @@ ceph:
     osd_directory: /var/lib/openstack-helm/ceph/osd
     mon_directory: /var/lib/openstack-helm/ceph/mon
 
+# There are two options for Ceph Storage: Device or Directory
+
+#Option 1: Device
+# the following illustrates the various ways to specify
+# OSDs and journals.  In the example system, we have
+# 3 disks for OSDs, one at /dev/sdd and the others
+# at SCSI IDs 2:0.0.5 and 2:0.0.6.  Journals for these
+# OSDs are at /dev/sde1 and partitions 1 and 2 of
+# scsi@2:0.0.4 respectively.
+#
+# OSD Devices and journals may be specified either as paths
+# into /dev or as SCSI or ISCSI IDs; journals may additionally have
+# a partition specified (this is not currently supported for OSDs).
+#
+# SCSI IDs should be specified in the form
+#  scsi@adapter:channel.id.LUN
+# eg:
+#  scsi@2:0.0.5
+# as found in lshw output. Attached ISCSI devices may
+# be specified as
+#  iscsi@host:port:iqn:unit:LUN
+# eg:
+#  iscsi@10.1.2.3:3260:iscsi-iqn.2018-01.com.example:5c033482:1
+#
+# Care should be taken when specifying a device here; /dev
+# paths and SCSI IDs can change across reboots, rendering
+# entries in this list invalid.  Also, specification of a
+# device for Ceph use can result in loss of existing data
+# on the device.
+#
+# To instantiate an OSD pod on a particular node, the node
+# must have two labels:
+#    ceph-osd=enabled
+# and
+#    cephosd-device-{name}=enabled
+# where {name} is a name: value from this map.
+#
+# See the installation documenation for more information.
+# block_devices:
+#   - name: dev-sdc
+#     device: /dev/sdd
+#     type: device
+#     journal: /dev/sde1
+#   - name: scsi-2-0.0.5
+#     device: scsi@2:0.0.5
+#     type: device
+#     journal:
+#       device: scsi@2:0.0.4
+#       partition: 1
+#   - name: scsi-2-0.0.6
+#     device: scsi@2:0.0.6
+#     type: device
+#     journal:
+#       device: scsi@2:0.0.4
+#       partition: 2
+
+#Option 2: Directory
+# You may specify directory for Ceph Storage.
+# In following example:
+# Specify OSD directory as - device: /var/lib/ceph/osd
+# Specify Journal directory under journal as - device: /var/lib/ceph/journal
+# Specify Type under for Directory as - type: directory
+# Specify lable as - name: var-lib-ceph-osd. This "var-lib-ceph-osd" name also
+# needs to be added to CEPH_OSD_DIRECTORY_DEFAULT_LABELS in vars.sh as
+# export CEPH_OSD_DIRECTORY_DEFAULT_LABELS=
+#        ${CEPH_DIRECTORY_OSD_DEFAULT_LABELS:="var-lib-ceph-osd"}
+# This name "var-lib-ceph-osd" will be used to label nodes as
+# ceph-osd-{type}-{name}=enabled which will result in node label
+# ceph-osd-directory-var-lib-ceph-osd=enabled
+#block_devices:
+#  - name: var-lib-ceph-osd
+#    device: /var/lib/ceph/osd
+#    type: directory
+#    journal:
+#      device: /var/lib/ceph/journal
+#    zap: '1'
+
 bootstrap:
   enabled: false
   script: |
