@@ -83,3 +83,34 @@ function get_osd_path {
 function extract_param {
   echo "${1##*=}"
 }
+
+# convert device paths like 'scsi@bus:x.y.z' or
+# 'iscsi@ip:port:iqn:unit:lun' to block device
+# names, if possible.
+# In the ISCSI case, the connection is presumed
+# to already exist.  We will not attempt to connect
+# to a target.
+function hardware_to_block {
+  local DEV=$1
+  if [ ! -b ${DEV} ]; then
+    local DEVTYPE=`echo ${DEV} |awk -F@ '{print $1}'|tr [A-Z] [a-z]`
+    local SDEV=''
+    case ${DEVTYPE} in
+      "scsi")
+        local SCSI=`echo $DEV | sed 's/^scsi@//i;s/\./:/g;s/[^0-9:]//g'`
+        SDEV=`ls /sys/bus/scsi/devices/${SCSI}/block`
+        ;;
+      "iscsi")
+        local ISCSI=`echo $DEV | sed 's/.*@//;s/\///g'`
+        IFS=':' read TGTIP TGTPORT TGTIQN TGTUNIT TGTLUN <<< ${ISCSI}
+        SDEV=`readlink -f /dev/disk/by-path/ip-${TGTIP}:${TGTPORT}-${TGTIQN}:${TGTUNIT}-lun-${TGTLUN}|xargs basename`
+        ;;
+    esac
+    if [ ! -z $SDEV -a -b /dev/$SDEV ]; then
+      echo /dev/${SDEV}
+      return
+    fi
+  fi
+  echo ${DEV}
+  return
+}

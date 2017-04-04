@@ -17,9 +17,29 @@ this is found throughout the project. If you have any questions or
 comments, please create an `issue
 <https://bugs.launchpad.net/openstack-helm>`_.
 
-.. note::
-  Please see the supported application versions outlined in the
-  `source variable file <https://github.com/openstack/openstack-helm/blob/master/tools/gate/vars.sh>`_.
+.. warning::
+  Please see the latest published information about our
+  application versions.
+
+  .. list-table::
+     :widths: 45 155 200
+     :header-rows: 1
+
+     * -
+       - Version
+       - Notes
+     * - **Kubernetes**
+       - `v1.7.5 <https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md#v175>`_
+       - `Custom Controller for RDB tools <https://quay.io/repository/attcomdev/kube-controller-manager?tab=tags>`_
+     * - **Helm**
+       - `v2.6.1 <https://github.com/kubernetes/helm/releases/tag/v2.6.1>`_
+       -
+     * - **Calico**
+       - `v2.1 <http://docs.projectcalico.org/v2.1/releases/>`_
+       - `calicoct v1.1 <https://github.com/projectcalico/calicoctl/releases>`_
+     * - **Docker**
+       - `v1.12.6 <https://github.com/docker/docker/releases/tag/v1.12.6>`_
+       - `Per kubeadm Instructions <https://kubernetes.io/docs/getting-started-guides/kubeadm/>`_
 
 Other versions and considerations (such as other CNI SDN providers),
 config map data, and value overrides will be included in other
@@ -120,7 +140,7 @@ our hosts. Using our Ubuntu example:
 
 ::
 
-    sudo apt-get install ceph-common
+    sudo apt-get install ceph-common -y
 
 Kubernetes Node DNS Resolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,16 +242,93 @@ Ceph Preparation and Installation
 ---------------------------------
 
 Ceph takes advantage of host networking.  For Ceph to be aware of the
-OSD cluster and public networks, you must set the CIDR ranges to be the
-subnet range that your host machines are running on.  In the example provided,
-the host's subnet CIDR is ``10.26.0.0/26``, but you will need to replace this
-to reflect your cluster. Export these variables to your deployment environment
-by issuing the following commands:
-
-::
+OSD cluster and public networks, you must set the CIDR ranges to be
+the subnet range that your host machines are running on.  In the
+example provided, the host's subnet CIDR is ``10.26.0.0/26``, but you
+will need to replace this to reflect your cluster. Export these
+variables to your deployment environment by issuing the following
+commands::
 
     export OSD_CLUSTER_NETWORK=10.26.0.0/26
     export OSD_PUBLIC_NETWORK=10.26.0.0/26
+
+You must select one or more disks attached to your hosts for Ceph
+object storage (these disks, and the daemons associated with them, are
+called "OSDs") and journals.  Each OSD requires a journal.  OSDs
+typically occupy entire disks while journals, which only require about
+5-10GB of space, may be placed in partitions.  You need not choose the
+same disks on every host.
+
+Use caution when choosing disks for journals and OSDs: while the
+installation process generally avoids obliterating working
+filesystems, this cannot be guaranteed.  Use particular care when
+including the "zap" option (see below) in a device specification: this
+will cause the installer to wipe OSDs and journals without regard to
+existing content.
+
+The Ceph chart deploys a pod for each OSD on a host.  The pod
+placement is based on labels attached to the host.  The label names
+are derived from entries in the ``block_devices`` map in
+``ceph/values.yaml``.  Devices and journals in this map may be
+specified as paths to a block device (``/dev/sdc``) or as SCSI
+harwdware paths (``scsi@2:0.0.2``).  While either syntax is supported,
+in general it's a good idea to specify devices as hardware paths
+rather than ``/dev`` paths, as the latter are not guaranteed to be
+stable across machine reboots or configuration changes.
+
+For example, consider a cluster consisting of 3 hosts.  On host1, we
+want to use ``/dev/sdd`` as an OSD with a journal on ``/dev/sde1``.
+On host2 and host3, we want OSDs at SCSI locations 2:0.0.5 and
+2:0.0.6, with their journals on partition 1 and 2 of the SCSI device
+at 2:0.0.4.
+
+First, we populate values.yaml with the information about all these
+disks, regardless of what host they're attached to::
+
+  block_devices:
+  - name: dev-sdd
+    device: /dev/sdd
+    journal: /dev/sde1
+  - name: scsi-2-0.0.5
+    device: scsi@2:0.0.5
+    journal:
+      device: scsi@2:0.0.4
+      partition: 1
+  - name: scsi-2-0.0.6
+    device: scsi@2:0.0.6
+    journal:
+      device: scsi@2:0.0.4
+    partition: 2
+
+
+It will usually be desirable to erase disks prior to their use as OSDs
+or journals.  This is necessary when a disk was used as part of a
+previous Ceph cluster installation.  Specifying ``zap: 1`` as a block
+device field will cause the installer to erase disks which do not
+appear to be part of the current cluster.  Use this option with
+caution, as it will unconditionally erase non-Ceph disks.
+
+As previously mentioned, labels are used to assign an OSD presence to
+a particular host.  This allows for varying disk configurations across
+the Ceph cluster and for the cluster to grow and shrink through the
+addition and removal of labels.  The ``name:`` fields are used to
+construct these labels, which have the form ``cephosd-device-`` *name*
+``=enabled``.
+
+Continuing our example, we now label the hosts in our cluster for
+their OSDs::
+
+   kubectl label nodes host1 cephosd-device-dev-sdd=enabled
+   kubectl label nodes host2 cephosd-device-scsi-2-0-0-5=enabled
+   kubectl label nodes host2 cephosd-device-scsi-2-0-0-6=enabled
+   kubectl label nodes host3 cephosd-device-scsi-2-0-0-5=enabled
+   kubectl label nodes host3 cephosd-device-scsi-2-0-0-6=enabled
+
+In most deployments, it should be possible to script generation of the
+``values.yaml`` entries and associated labels.  The
+``loopback_dev_info_collect`` function in
+``tools/gate/funcs/common.sh`` can serve as a model for how
+to automate this.
 
 Helm Preparation
 ----------------
