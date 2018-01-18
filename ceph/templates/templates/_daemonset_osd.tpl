@@ -24,6 +24,10 @@ spec:
         {{- if $value }}
         cephosd-{{ $value.type }}-{{ $value.name }}: enabled
         {{- end }}
+    {{- if $ctxt.Values.tolerations.osd }}
+      tolerations:
+{{ toYaml $ctxt.Values.tolerations.osd | indent 8 }}
+    {{- end }}
       hostNetwork: true
       hostPID: true
       dnsPolicy: {{ $ctxt.Values.pod.dns_policy }}

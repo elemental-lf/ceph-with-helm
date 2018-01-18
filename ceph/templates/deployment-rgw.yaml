@@ -39,6 +39,10 @@ spec:
 {{ tuple $envAll "ceph" "rgw" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
         {{ .Values.labels.rgw.node_selector_key }}: {{ .Values.labels.rgw.node_selector_value }}
+    {{- if .Values.tolerations.rgw }}
+      tolerations:
+{{ toYaml .Values.tolerations.rgw | indent 8 }}
+    {{- end }}
       initContainers:
 {{ tuple $envAll $dependencies list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
         - name: ceph-init-dirs
