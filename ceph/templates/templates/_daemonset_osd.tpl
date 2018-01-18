@@ -148,6 +148,10 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            {{- if $value.bluestore }}
+            - name: OSD_BLUESTORE
+              value: "1"
+            {{- end }}
             {{- if $value.zap }}
             - name: OSD_FORCE_ZAP
               value: {{ $value.zap | quote }}
