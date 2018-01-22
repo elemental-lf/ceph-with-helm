@@ -5,7 +5,7 @@
 {{- $dependencies := $ctxt.Values.dependencies.osd }}
 ---
 kind: DaemonSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 metadata:
   {{- if $value }}
   name: ceph-osd-{{ $value.type }}-{{ $value.name }}
@@ -13,6 +13,10 @@ metadata:
   name: ceph-osd
   {{- end }}
 spec:
+{{ tuple $ctxt "osd" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 2 }}
+  selector:
+    matchLabels:
+{{ tuple $ctxt "ceph" "osd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
   template:
     metadata:
       labels:

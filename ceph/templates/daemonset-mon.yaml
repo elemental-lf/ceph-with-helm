@@ -49,11 +49,14 @@ subjects:
     namespace: {{ $envAll.Release.Namespace }}
 ---
 kind: DaemonSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 metadata:
   name: ceph-mon
 spec:
 {{ tuple $envAll "mon" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 2 }}
+  selector:
+    matchLabels:
+{{ tuple $envAll "ceph" "mon" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
   template:
     metadata:
       labels:
