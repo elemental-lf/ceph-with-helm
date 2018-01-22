@@ -27,6 +27,7 @@ apiVersion: extensions/v1beta1
 metadata:
   name: ceph-osd
 spec:
+{{ tuple $envAll "osd" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 2 }}
   template:
     metadata:
       labels:
