@@ -18,6 +18,7 @@ spec:
       labels:
 {{ tuple $ctxt "ceph" "osd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
+{{ tuple $ctxt "osd" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ $ctxt.Values.labels.osd.node_selector_key }}: {{ $ctxt.Values.labels.osd.node_selector_value }}
