@@ -22,7 +22,17 @@ limitations under the License.
 {{- $randStringSuffix := randAlphaNum 5 | lower }}
 
 {{- $serviceAccountName := print "ceph-namespace-client-key-cleaner-" $randStringSuffix }}
-{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{/* We need to give this ServiceAccount annotations so that Helm recognizes it as part of a hook */}}
+{{/* tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" */}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+    "helm.sh/hook-weight": "10"
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
@@ -30,6 +40,8 @@ metadata:
   name: {{ $serviceAccountName }}
   annotations:
     "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+    "helm.sh/hook-weight": "5"
 rules:
   - apiGroups:
       - ""
@@ -46,6 +58,8 @@ metadata:
   name: {{ $serviceAccountName }}
   annotations:
     "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+    "helm.sh/hook-weight": "15"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -61,6 +75,8 @@ metadata:
   name: ceph-namespace-client-key-cleaner-{{ $randStringSuffix }}
   annotations:
     "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+    "helm.sh/hook-weight": "20"
 spec:
   template:
     metadata:
