@@ -13,7 +13,8 @@ metadata:
   name: ceph-osd
   {{- end }}
 spec:
-{{ tuple $ctxt "osd" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 2 }}
+  updateStrategy:
+    type: OnDelete
   selector:
     matchLabels:
 {{ tuple $ctxt "ceph" "osd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
