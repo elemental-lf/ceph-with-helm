@@ -53,7 +53,11 @@ apiVersion: apps/v1beta2
 metadata:
   name: ceph-mon
 spec:
-{{ tuple $envAll "mon" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 2 }}
+  minReadySeconds: 0
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   selector:
     matchLabels:
 {{ tuple $envAll "ceph" "mon" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}

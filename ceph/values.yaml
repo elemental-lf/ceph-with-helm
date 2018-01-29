@@ -61,18 +61,6 @@ pod:
     rbd_provisioner: 2
     cephfs_provisioner: 2
     mgr: 1
-  lifecycle:
-    upgrades:
-      daemonsets:
-        pod_replacement_strategy: RollingUpdate
-        mon:
-          enabled: true
-          min_ready_seconds: 60
-          max_unavailable: 1
-        osd:
-          enabled: true
-          min_ready_seconds: 60
-          max_unavailable: 1
   affinity:
     anti:
       type:
