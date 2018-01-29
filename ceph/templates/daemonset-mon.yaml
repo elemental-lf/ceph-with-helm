@@ -134,7 +134,7 @@ spec:
            exec:
             command:
              - /ceph-mon-liveness.sh
-           initialDelaySeconds: 60
+           initialDelaySeconds: 120
            periodSeconds: 60
           readinessProbe:
            exec:
