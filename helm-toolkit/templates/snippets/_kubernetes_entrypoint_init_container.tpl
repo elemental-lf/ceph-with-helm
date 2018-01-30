@@ -15,16 +15,18 @@ limitations under the License.
 */}}
 
 {{- define "helm-toolkit.snippets.kubernetes_entrypoint_init_container" -}}
-{{- $envAll := index . 0 }}
-{{- $deps := merge (dict) (index . 1) }}
-{{- if not $envAll.Release.IsInstall }}
-{{- if $deps.jobs -}}
-{{- range $envAll.Values.dependencies.ignore_during_upgrade.jobs }}
-{{- $_ := set $deps "jobs" (without $deps.jobs .) }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- $mounts := index . 2 -}}
+{{-   $envAll := index . 0 }}
+{{-   $deps := merge (dict) (index . 1) }}
+{{-   if $deps.jobs -}}
+{{-     range $filter := $envAll.Values.dependencies.filter }}
+{{-       if not (index $envAll.Values.manifests $filter.manifest) }}
+{{-         range $job := $filter.jobs }}
+{{-           $_ := set $deps "jobs" (without $deps.jobs $job) }}
+{{-         end }}
+{{-       end }}
+{{-     end }}
+{{-   end }}
+{{-   $mounts := index . 2 -}}
 - name: init
   image: {{ $envAll.Values.images.tags.dep_check }}
   imagePullPolicy: {{ $envAll.Values.images.pull_policy }}
@@ -54,5 +56,5 @@ limitations under the License.
   command:
     - kubernetes-entrypoint
   volumeMounts:
-{{ toYaml $mounts | indent 4 }}
+{{   toYaml $mounts | indent 4 }}
 {{- end -}}

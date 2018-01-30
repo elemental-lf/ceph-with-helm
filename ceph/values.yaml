@@ -238,10 +238,17 @@ conf:
       mds:
 
 dependencies:
-  ignore_during_upgrade:
-    jobs:
-      - ceph-storage-keys-generator
-      - ceph-mon-keyring-generator
+  filter:
+    - manifest: job_storage_admin_keys
+      jobs:
+        - ceph-storage-keys-generator
+    - manifest: job_keyring
+      jobs:
+        - ceph-mon-keyring-generator
+        - ceph-osd-keyring-generator
+        - ceph-rgw-keyring-generator
+        - ceph-mds-keyring-generator
+        - ceph-mgr-keyring-generator
   cephfs_client_key_generator:
   job_keyring_generator:
   namespace_client_key_cleaner:
