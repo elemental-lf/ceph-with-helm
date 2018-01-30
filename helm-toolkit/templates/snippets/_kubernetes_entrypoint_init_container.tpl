@@ -15,8 +15,15 @@ limitations under the License.
 */}}
 
 {{- define "helm-toolkit.snippets.kubernetes_entrypoint_init_container" -}}
-{{- $envAll := index . 0 -}}
-{{- $deps := index . 1 -}}
+{{- $envAll := index . 0 }}
+{{- $deps := merge (dict) (index . 1) }}
+{{- if not $envAll.Release.IsInstall }}
+{{- if $deps.jobs -}}
+{{- range $envAll.Values.dependencies.ignore_during_upgrade.jobs }}
+{{- $_ := set $deps "jobs" (without $deps.jobs .) }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- $mounts := index . 2 -}}
 - name: init
   image: {{ $envAll.Values.images.tags.dep_check }}

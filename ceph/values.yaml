@@ -238,16 +238,15 @@ conf:
       mds:
 
 dependencies:
+  ignore_during_upgrade:
+    jobs:
+      - ceph-storage-keys-generator
+      - ceph-mon-keyring-generator
   cephfs_client_key_generator:
-    jobs:
   job_keyring_generator:
-    jobs:
   namespace_client_key_cleaner:
-    jobs:
   namespace_client_key_generator:
-    jobs:
   storage_keys_generator:
-    jobs:
   mon:
     jobs:
       - ceph-storage-keys-generator
@@ -281,17 +280,14 @@ dependencies:
     - service: ceph_mon
       endpoint: internal
   bootstrap:
-    jobs:
     services:
     - service: ceph_mon
       endpoint: internal
   rbd_provisioner:
-    jobs:
     services:
     - service: ceph_mon
       endpoint: internal
   cephfs_provisioner:
-    jobs:
     services:
     - service: ceph_mon
       endpoint: internal
