@@ -64,6 +64,10 @@ spec:
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.mon.node_selector_key }}: {{ .Values.labels.mon.node_selector_value }}
+    {{- if .Values.tolerations.mon }}
+      tolerations:
+{{ toYaml .Values.tolerations.mon | indent 8 }}
+    {{- end }}
       hostNetwork: true
       dnsPolicy: {{ .Values.pod.dns_policy }}
       initContainers:

@@ -40,6 +40,9 @@ labels:
     node_selector_key: ceph-mon
     node_selector_value: enabled
 
+tolerations:
+  mon: {}
+
 pod:
   dns_policy: "ClusterFirstWithHostNet"
   replicas:

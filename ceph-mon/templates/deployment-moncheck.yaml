@@ -41,6 +41,10 @@ spec:
 {{ tuple $envAll "ceph" "moncheck" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
         {{ .Values.labels.mon.node_selector_key }}: {{ .Values.labels.mon.node_selector_value }}
+    {{- if .Values.tolerations.mon }}
+      tolerations:
+{{ toYaml .Values.tolerations.mon | indent 8 }}
+    {{- end }}
       initContainers:
 {{ tuple $envAll "moncheck" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
