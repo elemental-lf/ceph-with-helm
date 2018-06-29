@@ -317,7 +317,7 @@ limitations under the License.
     {{- if empty $context.Values._tmpYAMLcontainer.env }}
     {{- $_ := set $context.Values._tmpYAMLcontainer "env" ( list ) }}
     {{- end }}
-    {{ $containerEnv := prepend (prepend (prepend ( prepend (index $context.Values._tmpYAMLcontainer "env") (dict "name" "STORAGE_TYPE" "value" $v.data.type)) (dict "name" "JOURNAL_TYPE" "value" $v.journal.type)) (dict "name" "STORAGE_LOCATION" "value" $v.data.location)) (dict "name" "JOURNAL_LOCATION" "value" $v.journal.location) }}
+    {{ $containerEnv := prepend (prepend (prepend (prepend (prepend ( prepend (index $context.Values._tmpYAMLcontainer "env") (dict "name" "STORAGE_TYPE" "value" $v.data.type)) (dict "name" "JOURNAL_TYPE" "value" $v.journal.type)) (dict "name" "STORAGE_LOCATION" "value" $v.data.location)) (dict "name" "JOURNAL_LOCATION" "value" $v.journal.location)) (dict "name" "OSD_FORCE_ZAP" "value" ($v.zap | default false | ternary "1" "0"))) (dict "name" "OSD_BLUESTORE" "value" ($v.bluestore | default false | ternary "1" "0")) }}
     {{- $localInitContainerEnv := omit $context.Values._tmpYAMLcontainer "env" }}
     {{- $_ := set $localInitContainerEnv "env" $containerEnv }}
     {{ $containerList := append $context.Values.__tmpYAMLcontainers $localInitContainerEnv }}
@@ -328,7 +328,7 @@ limitations under the License.
   {{- $_ := set $context.Values "__tmpYAMLinitContainers" list }}
   {{- range $podContainer := $context.Values.__daemonset_yaml.spec.template.spec.initContainers }}
     {{- $_ := set $context.Values "_tmpYAMLinitContainer" $podContainer }}
-    {{ $initContainerEnv := prepend (prepend (prepend ( prepend (index $context.Values._tmpYAMLinitContainer "env") (dict "name" "STORAGE_TYPE" "value" $v.data.type)) (dict "name" "JOURNAL_TYPE" "value" $v.journal.type)) (dict "name" "STORAGE_LOCATION" "value" $v.data.location)) (dict "name" "JOURNAL_LOCATION" "value" $v.journal.location) }}
+    {{ $initContainerEnv := prepend (prepend (prepend (prepend (prepend ( prepend (index $context.Values._tmpYAMLinitContainer "env") (dict "name" "STORAGE_TYPE" "value" $v.data.type)) (dict "name" "JOURNAL_TYPE" "value" $v.journal.type)) (dict "name" "STORAGE_LOCATION" "value" $v.data.location)) (dict "name" "JOURNAL_LOCATION" "value" $v.journal.location)) (dict "name" "OSD_FORCE_ZAP" "value" ($v.zap | default false | ternary "1" "0"))) (dict "name" "OSD_BLUESTORE" "value" ($v.bluestore | default false | ternary "1" "0")) }}
     {{- $localInitContainerEnv := omit $context.Values._tmpYAMLinitContainer "env" }}
     {{- $_ := set $localInitContainerEnv "env" $initContainerEnv }}
     {{ $initContainerList := append $context.Values.__tmpYAMLinitContainers $localInitContainerEnv }}

@@ -60,6 +60,10 @@ spec:
           #   value: directory
           # - name: STORAGE_TYPE
           #   value: directory
+          # - name: OSD_BLUESTORE
+          #   value: false
+          # - name: OSD_FORCE_ZAP
+          #   value: false
             - name: CLUSTER
               value: "ceph"
           volumeMounts:
@@ -90,6 +94,10 @@ spec:
           #   value: directory
           # - name: STORAGE_TYPE
           #   value: directory
+          # - name: OSD_BLUESTORE
+          #   value: false
+          # - name: OSD_FORCE_ZAP
+          #   value: false
             - name: CLUSTER
               value: "ceph"
             - name: CEPH_GET_ADMIN_KEY
@@ -144,6 +152,10 @@ spec:
           #   value: directory
           # - name: STORAGE_TYPE
           #   value: directory
+          # - name: OSD_BLUESTORE
+          #   value: false
+          # - name: OSD_FORCE_ZAP
+          #   value: false
             - name: CLUSTER
               value: "ceph"
             - name: CEPH_GET_ADMIN_KEY
