@@ -181,20 +181,23 @@ limitations under the License.
   {{- end }}
 
   {{/* generate the default daemonset */}}
-  {{/* set name */}}
-  {{- $_ := set $context.Values.__default "name" "default" }}
+  {{/* if default storage configuration is empty, don't output a default daemonset at all */}}
+  {{- if $context.Values.conf.storage.osd }}
+    {{/* set name */}}
+    {{- $_ := set $context.Values.__default "name" "default" }}
 
-  {{/* no overrides apply, so copy as-is */}}
-  {{- $root_conf_copy1 := omit $context.Values.conf "overrides" }}
-  {{- $root_conf_copy2 := dict "conf" $root_conf_copy1 }}
-  {{- $context_values := omit $context.Values "conf" }}
-  {{- $root_conf_copy3 := merge $context_values $root_conf_copy2 }}
-  {{- $root_conf_copy4 := dict "Values" $root_conf_copy3 }}
-  {{- $_ := set $context.Values.__default "nodeData" $root_conf_copy4 }}
+    {{/* no overrides apply, so copy as-is */}}
+    {{- $root_conf_copy1 := omit $context.Values.conf "overrides" }}
+    {{- $root_conf_copy2 := dict "conf" $root_conf_copy1 }}
+    {{- $context_values := omit $context.Values "conf" }}
+    {{- $root_conf_copy3 := merge $context_values $root_conf_copy2 }}
+    {{- $root_conf_copy4 := dict "Values" $root_conf_copy3 }}
+    {{- $_ := set $context.Values.__default "nodeData" $root_conf_copy4 }}
 
-  {{/* add to global list */}}
-  {{- $list_aggregate := append $context.Values.__daemonset_list $context.Values.__default }}
-  {{- $_ := set $context.Values "__daemonset_list" $list_aggregate }}
+    {{/* add to global list */}}
+    {{- $list_aggregate := append $context.Values.__daemonset_list $context.Values.__default }}
+    {{- $_ := set $context.Values "__daemonset_list" $list_aggregate }}
+  {{- end }}
 
   {{- $_ := set $context.Values "__last_configmap_name" $configmap_name }}
   {{- range $current_dict := $context.Values.__daemonset_list }}
