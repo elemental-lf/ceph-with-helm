@@ -314,8 +314,11 @@ jobs:
     user: keystone
     group: keystone
   fernet_rotate:
-    # weekly
-    cron: "0 0 * * 0"
+    # NOTE(rk760n): key rotation frequency, token expiration, active keys should statisfy the formula
+    # max_active_keys = (token_expiration / rotation_frequency) + 2
+    # as expiration is 12h, and max_active_keys set to 3 by default, rotation_frequency need to be adjusted
+    # 12 hours
+    cron: "0 */12 * * *"
     user: keystone
     group: keystone
     history:
@@ -339,8 +342,12 @@ conf:
     DEFAULT:
       log_config_append: /etc/keystone/logging.conf
       max_token_size: 255
+      #NOTE(rk760n): if you need auth notifications to be sent, uncomment it
+      #notification_opt_out: ""
     token:
       provider: fernet
+      # 12 hours
+      expiration: 43200
     identity:
       domain_specific_drivers_enabled: True
       domain_config_dir: /etc/keystonedomains
@@ -353,6 +360,8 @@ conf:
     cache:
       enabled: true
       backend: dogpile.cache.memcached
+    oslo_messaging_notifications:
+      driver: messagingv2
   # NOTE(lamt) We can leverage multiple domains with different
   # configurations as outlined in
   # https://docs.openstack.org/keystone/pike/admin/identity-domain-specific-config.html.
@@ -584,6 +593,20 @@ conf:
     identity:update_domain_config: rule:admin_required
     identity:delete_domain_config: rule:admin_required
     identity:get_domain_config_default: rule:admin_required
+  rabbitmq:
+    #NOTE(rk760n): adding rmq policy to mirror messages from notification queues and set expiration time for the ones
+    policies:
+      - vhost: "keystone"
+        name: "ha_ttl_keystone"
+        definition:
+          #mirror messges to other nodes in rmq cluster
+          ha-mode: "all"
+          ha-sync-mode: "automatic"
+          #70s
+          message-ttl: 70000
+        priority: 0
+        apply-to: all
+        pattern: '(notifications)\.'
   rally_tests:
     run_tempest: false
     tests:

@@ -19,150 +19,48 @@ to track what can be done to improve our documentation.
 
 .. note::
   Please see the supported application versions outlined in the
-  `source variable file <https://github.com/openstack/openstack-helm-infra/blob/master/playbooks/vars.yaml>`_.
+  `source variable file <https://github.com/openstack/openstack-helm-infra/blob/master/roles/build-images/defaults/main.yml>`_.
 
 Other versions and considerations (such as other CNI SDN providers),
 config map data, and value overrides will be included in other
 documentation as we explore these options further.
 
 The installation procedures below, will take an administrator from a new
-``kubeadm`` installation to Openstack-Helm deployment.
+``kubeadm`` installation to OpenStack-Helm deployment.
+
+.. note:: Many of the default container images that are referenced across
+  OpenStack-Helm charts are not intended for production use; for example,
+  while LOCI and Kolla can be used to produce production-grade images, their
+  public reference images are not prod-grade.  In addition, some of the default
+  images use ``latest`` or ``master`` tags, which are moving targets and can
+  lead to unpredictable behavior.  For production-like deployments, we
+  recommend building custom images, or at minimum caching a set of known
+  images, and incorporating them into OpenStack-Helm via values overrides.
 
 .. warning:: Until the Ubuntu kernel shipped with 16.04 supports CephFS
    subvolume mounts by default the `HWE Kernel
-   <../troubleshooting/ubuntu-hwe-kernel.rst>`__ is required to use CephFS.
+   <../troubleshooting/ubuntu-hwe-kernel.html>`__ is required to use CephFS.
 
 Kubernetes Preparation
 ======================
 
 You can use any Kubernetes deployment tool to bring up a working Kubernetes
-cluster for use with OpenStack-Helm. For simplicity however we will describe
-deployment using the OpenStack-Helm gate scripts to bring up a reference cluster
-using KubeADM and Ansible.
+cluster for use with OpenStack-Helm. For production deployments,
+please choose (and tune appropriately) a highly-resilient Kubernetes
+distribution, e.g.:
 
-OpenStack-Helm Infra KubeADM deployment
----------------------------------------
+- `Airship <https://airshipit.org/>`_, a declarative open cloud
+  infrastructure platform
+- `KubeADM <https://kubernetes.io/docs/setup/independent/high-availability/>`_,
+  the foundation of a number of Kubernetes installation solutions
 
-On the worker nodes
+For a lab or proof-of-concept environment, the OpenStack-Helm gate scripts
+can be used to quickly deploy a multinode Kubernetes cluster using KubeADM
+and Ansible. Please refer to the deployment guide
+`here <./kubernetes-gate.html>`__.
 
-.. code-block:: shell
-
-    #!/bin/bash
-    set -xe
-    sudo apt-get update
-    sudo apt-get install --no-install-recommends -y git
-
-
-SSH-Key preparation
--------------------
-
-Create an ssh-key on the master node, and add the public key to each node that
-you intend to join the cluster.
-
-.. note::
-   1. To generate the key you can use ``ssh-keygen -t rsa``
-   2. To copy the ssh key to each node, this can be accomplished with
-      the ``ssh-copy-id`` command, for example: *ssh-copy-id
-      ubuntu@192.168.122.178*
-   3. Copy the key: ``sudo cp ~/.ssh/id_rsa /etc/openstack-helm/deploy-key.pem``
-   4. Set correct ownership: ``sudo chown ubuntu
-      /etc/openstack-helm/deploy-key.pem``
-
-   Test this by ssh'ing to a node and then executing a command with
-   'sudo'. Neither operation should require a password.
-
-Clone the OpenStack-Helm Repos
-------------------------------
-
-Once the host has been configured the repos containing the OpenStack-Helm charts
-should be cloned onto each node in the cluster:
-
-.. code-block:: shell
-
-    #!/bin/bash
-    set -xe
-
-    sudo chown -R ubuntu: /opt
-    git clone https://git.openstack.org/openstack/openstack-helm-infra.git /opt/openstack-helm-infra
-    git clone https://git.openstack.org/openstack/openstack-helm.git /opt/openstack-helm
-
-
-Create an inventory file
-------------------------
-
-On the master node create an inventory file for the cluster:
-
-.. note::
-   node_one, node_two and node_three below are all worker nodes,
-   children of the master node that the commands below are executed on.
-
-.. code-block:: shell
-
-    #!/bin/bash
-    set -xe
-    cat > /opt/openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml <<EOF
-    all:
-      children:
-        primary:
-          hosts:
-            node_one:
-              ansible_port: 22
-              ansible_host: $node_one_ip
-              ansible_user: ubuntu
-              ansible_ssh_private_key_file: /etc/openstack-helm/deploy-key.pem
-              ansible_ssh_extra_args: -o StrictHostKeyChecking=no
-        nodes:
-          hosts:
-            node_two:
-              ansible_port: 22
-              ansible_host: $node_two_ip
-              ansible_user: ubuntu
-              ansible_ssh_private_key_file: /etc/openstack-helm/deploy-key.pem
-              ansible_ssh_extra_args: -o StrictHostKeyChecking=no
-            node_three:
-              ansible_port: 22
-              ansible_host: $node_three_ip
-              ansible_user: ubuntu
-              ansible_ssh_private_key_file: /etc/openstack-helm/deploy-key.pem
-              ansible_ssh_extra_args: -o StrictHostKeyChecking=no
-    EOF
-
-Create an environment file
---------------------------
-
-On the master node create an environment file for the cluster:
-
-.. code-block:: shell
-
-    #!/bin/bash
-    set -xe
-    function net_default_iface {
-     sudo ip -4 route list 0/0 | awk '{ print $5; exit }'
-    }
-    cat > /opt/openstack-helm-infra/tools/gate/devel/multinode-vars.yaml <<EOF
-    kubernetes_network_default_device: $(net_default_iface)
-    EOF
-
-.. note::
-  This installation, by default will use Google DNS servers, 8.8.8.8 or 8.8.4.4
-  and updates resolv.conf. These DNS nameserver entries can be changed by
-  updating file ``/openstack-helm-infra/tools/images/kubeadm-aio/assets/opt/playbooks/vars.yaml``
-  under section ``external_dns_nameservers``. This change must be done on each
-  node in your cluster.
-
-
-Run the playbooks
------------------
-
-On the master node run the playbooks:
-
-.. code-block:: shell
-
-    #!/bin/bash
-    set -xe
-    cd /opt/openstack-helm-infra
-    make dev-deploy setup-host multinode
-    make dev-deploy k8s multinode
+Managing and configuring a Kubernetes cluster is beyond the scope
+of OpenStack-Helm and this guide.
 
 Deploy OpenStack-Helm
 =====================
@@ -205,6 +103,23 @@ Alternatively, this step can be performed by running the script directly:
 
 Deploy Ceph
 -----------
+
+The script below configures Ceph to use filesystem directory-based storage.
+To configure a custom block device-based backend, please refer
+to the ``ceph-osd`` `values.yaml <https://github.com/openstack/openstack-helm/blob/master/ceph-osd/values.yaml>`_.
+
+Additional information on Kubernetes Ceph-based integration can be found in
+the documentation for the
+`CephFS <https://github.com/kubernetes-incubator/external-storage/blob/master/ceph/cephfs/README.md>`_
+and `RBD <https://github.com/kubernetes-incubator/external-storage/blob/master/ceph/rbd/README.md>`_
+storage provisioners, as well as for the alternative
+`NFS <https://github.com/kubernetes-incubator/external-storage/blob/master/nfs/README.md>`_ provisioner.
+
+.. warning:: The upstream Ceph image repository does not currently pin tags to
+  specific Ceph point releases.  This can lead to unpredictable results
+  in long-lived deployments.  In production scenarios, we strongly recommend
+  overriding the Ceph images to use either custom built images or controlled,
+  cached images.
 
 .. note::
   The `./tools/deployment/multinode/kube-node-subnet.sh` script requires docker
@@ -388,3 +303,14 @@ Alternatively, this step can be performed by running the script directly:
 .. code-block:: shell
 
   ./tools/deployment/multinode/160-barbican.sh
+
+Configure OpenStack
+-------------------
+
+Configuring OpenStack for a particular production use-case is beyond the scope
+of this guide. Please refer to the
+OpenStack `Configuration <https://docs.openstack.org/queens/configuration/>`_
+documentation for your selected version of OpenStack to determine
+what additional values overrides should be
+provided to the OpenStack-Helm charts to ensure appropriate networking,
+security, etc. is in place.

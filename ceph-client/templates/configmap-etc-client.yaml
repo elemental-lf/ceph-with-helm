@@ -51,5 +51,5 @@ data:
 {{- end }}
 {{- end }}
 {{- if .Values.manifests.configmap_etc }}
-{{- list "ceph-etc" . | include "ceph.configmap.etc" }}
+{{- list "ceph-client-etc" . | include "ceph.configmap.etc" }}
 {{- end }}

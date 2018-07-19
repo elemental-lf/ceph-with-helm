@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Default values for ceph-mon.
+# This is a YAML-formatted file.
+# Declare name/value pairs to be passed into your templates.
+# name: value
+
 deployment:
   ceph: true
   storage_secrets: true
@@ -111,8 +116,6 @@ secrets:
 network:
   public: 192.168.0.0/16
   cluster: 192.168.0.0/16
-  port:
-    mon: 6789
 
 conf:
   templates:

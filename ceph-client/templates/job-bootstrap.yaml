@@ -47,7 +47,7 @@ spec:
               mountPath: /tmp/bootstrap.sh
               subPath: bootstrap.sh
               readOnly: true
-            - name: ceph-etc
+            - name: ceph-client-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
               readOnly: true
@@ -60,9 +60,9 @@ spec:
           configMap:
             name: ceph-client-bin
             defaultMode: 0555
-        - name: ceph-etc
+        - name: ceph-client-etc
           configMap:
-            name: ceph-etc
+            name: ceph-client-etc
             defaultMode: 0444
         - name: ceph-client-admin-keyring
           secret:
