@@ -192,10 +192,14 @@ conf:
     default:
       #NOTE(portdirect): this should be 'same_host' for a single node
       # cluster to be in a healthy state
+      #NOTE(lf): Only used for replicated pools, erasure coded pools
+      # automatically generate a rule matching the selected profile
       crush_rule: replicated_rule
     #NOTE(portdirect): this section describes the pools that will be managed by
     # the ceph pool management job, as it tunes the pgs and crush rule, based on
     # the above.
+    #NOTE(lf): For erasure coded pools the `replication` key should be set to k+m
+    # to get the pg calculation right.
     spec:
       # RBD pool
       - name: rbd

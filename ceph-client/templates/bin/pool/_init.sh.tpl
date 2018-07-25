@@ -43,16 +43,28 @@ function create_pool () {
   POOL_REPLICATION=$3
   POOL_PLACEMENT_GROUPS=$4
   POOL_CRUSH_RULE=$5
+  POOL_EC_PROFILE_SPEC=$6
   if ! ceph --cluster "${CLUSTER}" osd pool stats "${POOL_NAME}" > /dev/null 2>&1; then
-    ceph --cluster "${CLUSTER}" osd pool create "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS}
+    if [ -z "$POOL_EC_PROFILE_SPEC" ]; then
+      ceph --cluster "${CLUSTER}" osd pool create "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS}
+    else
+      if ! ceph --cluster "${CLUSTER}" osd erasure-code-profile ls | grep -q "^${POOL_NAME}$"; then
+        ceph --cluster "${CLUSTER}" osd erasure-code-profile set "${POOL_NAME}" $POOL_EC_PROFILE_SPEC
+      fi
+      # This will also implicitly create the corresponding crush rule (named after the pool, too)
+      ceph --cluster "${CLUSTER}" osd pool create "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS} ${POOL_PLACEMENT_GROUPS} erasure ${POOL_NAME}
+    fi
     while [ $(ceph --cluster "${CLUSTER}" -s | grep creating -c) -gt 0 ]; do echo -n .;sleep 1; done
     if [ "x${POOL_NAME}" == "xrbd" ]; then
       rbd --cluster "${CLUSTER}" pool init ${POOL_NAME}
     fi
     ceph --cluster "${CLUSTER}" osd pool application enable "${POOL_NAME}" "${POOL_APPLICATION}"
   fi
-  ceph --cluster "${CLUSTER}" osd pool set "${POOL_NAME}" size ${POOL_REPLICATION}
-  ceph --cluster "${CLUSTER}" osd pool set "${POOL_NAME}" crush_rule "${POOL_CRUSH_RULE}"
+  # Only do this for replicated pools
+  if [ -z "$POOL_EC_PROFILE_SPEC" ]; then
+    ceph --cluster "${CLUSTER}" osd pool set "${POOL_NAME}" size ${POOL_REPLICATION}
+    ceph --cluster "${CLUSTER}" osd pool set "${POOL_NAME}" crush_rule "${POOL_CRUSH_RULE}"
+  fi
   for PG_PARAM in pg_num pgp_num; do
     CURRENT_PG_VALUE=$(ceph --cluster ceph osd pool get "${POOL_NAME}" "${PG_PARAM}" | awk "/^${PG_PARAM}:/ { print \$NF }")
     if [ "${POOL_PLACEMENT_GROUPS}" -gt "${CURRENT_PG_VALUE}" ]; then
@@ -69,8 +81,9 @@ function manage_pool () {
   TOTAL_DATA_PERCENT=$5
   TARGET_PG_PER_OSD=$6
   POOL_CRUSH_RULE=$7
+  POOL_EC_PROFILE_SPEC=$8
   POOL_PLACEMENT_GROUPS=$(/tmp/pool-calc.py ${POOL_REPLICATION} ${TOTAL_OSDS} ${TOTAL_DATA_PERCENT} ${TARGET_PG_PER_OSD})
-  create_pool "${POOL_APPLICATION}" "${POOL_NAME}" "${POOL_REPLICATION}" "${POOL_PLACEMENT_GROUPS}" "${POOL_CRUSH_RULE}"
+  create_pool "${POOL_APPLICATION}" "${POOL_NAME}" "${POOL_REPLICATION}" "${POOL_PLACEMENT_GROUPS}" "${POOL_CRUSH_RULE}" "$POOL_EC_PROFILE_SPEC"
 }
 
 {{ $targetNumOSD := .Values.conf.pool.target.osd }}
@@ -78,7 +91,7 @@ function manage_pool () {
 {{ $crushRuleDefault := .Values.conf.pool.default.crush_rule }}
 {{- range $pool := .Values.conf.pool.spec -}}
 {{- with $pool }}
-manage_pool {{ .application }} {{ .name }} {{ .replication }} {{ $targetNumOSD }} {{ .percent_total_data }} {{ $targetPGperOSD }} {{ $crushRuleDefault }}
+manage_pool {{ .application }} {{ .name }} {{ .replication }} {{ $targetNumOSD }} {{ .percent_total_data }} {{ $targetPGperOSD }} {{ .crush_rule | default $crushRuleDefault }} "{{ .ec_profile_spec | default "" }}"
 {{- end }}
 {{- end }}
 
