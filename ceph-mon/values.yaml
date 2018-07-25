@@ -46,7 +46,7 @@ labels:
     node_selector_value: enabled
 
 tolerations:
-  mon: {}
+  mon: []
 
 pod:
   dns_policy: "ClusterFirstWithHostNet"
