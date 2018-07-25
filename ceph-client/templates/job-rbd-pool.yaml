@@ -17,13 +17,15 @@ limitations under the License.
 {{- if and .Values.manifests.job_rbd_pool .Values.deployment.ceph }}
 {{- $envAll := . }}
 
+{{- $poolInitHashStringSuffix := tuple "bin/pool/_init.sh.tpl" . | include "helm-toolkit.utils.template" | sha256sum | trunc 8 }}
+
 {{- $serviceAccountName := "ceph-rbd-pool" }}
 {{ tuple $envAll "rbd_pool" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ceph-rbd-pool
+  name: ceph-rbd-pool-{{ $poolInitHashStringSuffix }}
 spec:
   template:
     metadata:
