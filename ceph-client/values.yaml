@@ -60,6 +60,9 @@ labels:
     node_selector_key: ceph-mgr
     node_selector_value: enabled
 
+tolerations:
+  mgr: []
+
 pod:
   dns_policy: "ClusterFirstWithHostNet"
   replicas:
