@@ -139,7 +139,9 @@ dependencies:
       jobs: null
     cephfs_provisioner:
       jobs:
-        - ceph-rbd-pool
+        - labels:
+            application: ceph
+            component: rbd-pool
       services:
         - endpoint: internal
           service: ceph_mon
@@ -149,7 +151,9 @@ dependencies:
       jobs: null
     rbd_provisioner:
       jobs:
-        - ceph-rbd-pool
+        - labels:
+            application: ceph
+            component: rbd-pool
       services:
         - endpoint: internal
           service: ceph_mon
