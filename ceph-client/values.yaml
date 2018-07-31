@@ -281,7 +281,7 @@ conf:
     config:
       rgw_keystone_api_version: 3
       rgw_keystone_accepted_roles: "admin, member"
-      rgw_keystone_implicit_tenants: false
+      rgw_keystone_implicit_tenants: true
       rgw_keystone_make_new_tenants: true
       rgw_s3_auth_use_keystone: true
       rgw_swift_account_in_url: true
@@ -449,8 +449,8 @@ endpoints:
         username: swift
         password: password
         project_name: service
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
     hosts:
       default: keystone-api
       public: keystone
@@ -461,10 +461,9 @@ endpoints:
     scheme:
       default: http
     port:
-      admin:
-        default: 35357
       api:
         default: 80
+        admin: 35357
   object_store:
     name: swift
     namespace: null

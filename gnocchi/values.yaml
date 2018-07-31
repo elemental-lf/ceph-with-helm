@@ -471,14 +471,14 @@ endpoints:
         os_tenant_name: "admin"
       gnocchi:
         username: "gnocchi"
-        user_domain_name: "default"
         role: "admin"
         password: "password"
         project_name: "service"
-        project_domain_name: "default"
         region_name: "RegionOne"
         os_auth_type: "password"
         os_tenant_name: "service"
+        user_domain_name: service
+        project_domain_name: service
     hosts:
       default: keystone-api
       public: keystone
@@ -489,10 +489,9 @@ endpoints:
     scheme:
       default: 'http'
     port:
-      admin:
-        default: 35357
       api:
         default: 80
+        admin: 35357
   metric:
     name: gnocchi
     hosts:

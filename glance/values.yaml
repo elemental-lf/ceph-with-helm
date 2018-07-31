@@ -226,6 +226,8 @@ conf:
       # via the endpoints section.
       bind_port: null
       workers: 1
+      enable_v1_api: False
+      enable_v2_registry: False
     keystone_authtoken:
       auth_type: password
       auth_version: v3
@@ -268,7 +270,6 @@ conf:
       level: INFO
       handlers:
         - stdout
-        - stderr
       qualname: glance
     logger_amqp:
       level: WARNING
@@ -359,6 +360,9 @@ conf:
     user_domain_name = {{ .Values.endpoints.identity.auth.glance.user_domain_name }}
     project_domain_name = {{ .Values.endpoints.identity.auth.glance.project_domain_name }}
     auth_version = 3
+    # NOTE(portdirect): https://bugs.launchpad.net/glance-store/+bug/1620999
+    project_domain_id = ""
+    user_domain_id = ""
     {{- end -}}
   rabbitmq:
     #NOTE(rk760n): adding rmq policy to mirror messages from notification queues and set expiration time for the ones
@@ -554,16 +558,16 @@ endpoints:
         username: glance
         password: password
         project_name: service
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
       test:
         role: admin
         region_name: RegionOne
         username: test
         password: password
         project_name: test
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
     hosts:
       default: keystone-api
       public: keystone
@@ -574,10 +578,9 @@ endpoints:
     scheme:
       default: http
     port:
-      admin:
-        default: 35357
       api:
         default: 80
+        admin: 35357
   image:
     name: glance
     hosts:
@@ -862,9 +865,9 @@ manifests:
   configmap_bin: true
   configmap_etc: true
   deployment_api: true
-  deployment_registry: true
+  deployment_registry: false
   ingress_api: true
-  ingress_registry: true
+  ingress_registry: false
   job_bootstrap: true
   job_clean: true
   job_db_init: true
@@ -877,7 +880,7 @@ manifests:
   job_storage_init: true
   job_rabbit_init: true
   pdb_api: true
-  pdb_registry: true
+  pdb_registry: false
   pod_rally_test: true
   pvc_images: true
   secret_db: true
@@ -885,6 +888,6 @@ manifests:
   secret_keystone: true
   secret_rabbitmq: true
   service_ingress_api: true
-  service_ingress_registry: true
+  service_ingress_registry: false
   service_api: true
   service_registry: true

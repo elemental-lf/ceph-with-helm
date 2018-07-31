@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */}}
+
 {{- define "ceph.utils.match_exprs_hash" }}
   {{- $match_exprs := index . 0 }}
   {{- $context := index . 1 }}
@@ -23,6 +24,7 @@ limitations under the License.
   {{- $context.Values.__match_exprs_hash_content | sha256sum | trunc 8 }}
   {{- $_ := unset $context.Values "__match_exprs_hash_content" }}
 {{- end }}
+
 {{- define "ceph.utils.osd_daemonset_overrides" }}
   {{- $daemonset := index . 0 }}
   {{- $daemonset_yaml := index . 1 }}

@@ -24,7 +24,7 @@ labels:
 
 images:
   tags:
-    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.2.1
+    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
     tempest_run_tests: docker.io/kolla/ubuntu-source-tempest:3.0.3
     ks_user: docker.io/openstackhelm/heat:newton
     image_repo_sync: docker.io/docker:17.07.0
@@ -241,8 +241,8 @@ endpoints:
         username: tempest
         password: password
         project_name: service
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
     hosts:
       default: keystone-api
       public: keystone
@@ -253,10 +253,9 @@ endpoints:
     scheme:
       default: http
     port:
-      admin:
-        default: 35357
       api:
         default: 80
+        admin: 35357
 
 manifests:
   configmap_bin: true

@@ -50,7 +50,7 @@ data:
         ingress: 2
   source:
     type: local
-    location: ${OSH_PATH}
+    location: ${OSH_INFRA_PATH}
     subpath: ingress
     reference: master
   dependencies:
@@ -191,7 +191,7 @@ data:
         enabled: true
   source:
     type: local
-    location: ${OSH_PATH}
+    location: ${OSH_INFRA_PATH}
     subpath: memcached
     reference: master
   dependencies:
@@ -516,6 +516,17 @@ data:
       replicas:
         api: 2
         registry: 2
+    # NOTE(portdirect): glance APIv1 is required for heat in Newton
+    conf:
+      glance:
+        DEFAULT:
+          enable_v1_api: true
+          enable_v2_registry: true
+    manifests:
+      deployment_registry: true
+      ingress_registry: true
+      pdb_registry: true
+      service_ingress_registry: true
   source:
     type: local
     location: ${OSH_PATH}
@@ -711,6 +722,9 @@ data:
   chart_name: libvirt
   release: libvirt
   namespace: openstack
+  wait:
+    labels:
+      release_group: osh-libvirt
   install:
     no_hooks: False
   upgrade:
@@ -794,6 +808,9 @@ data:
   chart_name: nova
   release: nova
   namespace: openstack
+  wait:
+    labels:
+      release_group: osh-nova
   install:
     no_hooks: False
   upgrade:
@@ -1005,6 +1022,9 @@ data:
   chart_name: neutron
   release: neutron
   namespace: openstack
+  wait:
+    labels:
+      release_group: osh-neutron
   install:
     no_hooks: False
   upgrade:

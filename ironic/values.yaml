@@ -158,7 +158,6 @@ conf:
       level: INFO
       handlers:
         - stdout
-        - stderr
       qualname: ironic
     logger_amqp:
       level: WARNING
@@ -384,16 +383,16 @@ endpoints:
         username: glance
         password: password
         project_name: service
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
       ironic:
         role: admin
         region_name: RegionOne
         username: ironic
         password: password
         project_name: service
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
     hosts:
       default: keystone-api
       public: keystone
@@ -404,10 +403,9 @@ endpoints:
     scheme:
       default: http
     port:
-      admin:
-        default: 35357
       api:
         default: 80
+        admin: 35357
   baremetal:
     name: ironic
     hosts:

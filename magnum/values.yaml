@@ -156,7 +156,6 @@ conf:
       level: INFO
       handlers:
         - stdout
-        - stderr
       qualname: magnum
     logger_amqp:
       level: WARNING
@@ -344,8 +343,8 @@ endpoints:
         username: magnum
         password: password
         project_name: service
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
       magnum_stack_user:
         role: admin
         region_name: RegionOne
@@ -362,10 +361,9 @@ endpoints:
     scheme:
       default: http
     port:
-      admin:
-        default: 35357
       api:
         default: 80
+        admin: 35357
   container_infra:
     name: magnum
     hosts:

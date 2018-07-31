@@ -225,16 +225,16 @@ endpoints:
         username: mistral
         password: password
         project_name: service
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
       test:
         role: admin
         region_name: RegionOne
         username: test
         password: password
         project_name: test
-        user_domain_name: default
-        project_domain_name: default
+        user_domain_name: service
+        project_domain_name: service
     hosts:
       default: keystone-api
       public: keystone
@@ -245,10 +245,9 @@ endpoints:
     scheme:
       default: http
     port:
-      admin:
-        default: 35357
       api:
         default: 80
+        admin: 35357
   workflowv2:
     name: mistral
     hosts:
@@ -488,7 +487,6 @@ conf:
       level: INFO
       handlers:
         - stdout
-        - stderr
       qualname: mistral
     logger_amqp:
       level: WARNING
