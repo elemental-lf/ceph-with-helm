@@ -48,6 +48,9 @@ labels:
     node_selector_key: openstack-control-plane
     node_selector_value: enabled
 
+tolerations:
+  provisioner: []
+
 pod:
   dns_policy: "ClusterFirstWithHostNet"
   replicas:

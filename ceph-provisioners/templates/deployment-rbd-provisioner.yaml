@@ -140,6 +140,10 @@ spec:
 {{ tuple $envAll "rbd" "provisioner" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
         {{ .Values.labels.provisioner.node_selector_key }}: {{ .Values.labels.provisioner.node_selector_value }}
+    {{- if .Values.tolerations.provisioner }}
+      tolerations:
+{{ toYaml .Values.tolerations.provisioner | indent 8 }}
+    {{- end }}
       initContainers:
 {{ tuple $envAll "rbd_provisioner" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
