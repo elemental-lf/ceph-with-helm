@@ -55,6 +55,8 @@ spec:
         - name: keystone-api
 {{ tuple $envAll "keystone_api" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          securityContext:
+            runAsUser: {{ .Values.pod.user.keystone.uid }}
           command:
             - /tmp/keystone-api.sh
             - start
@@ -65,25 +67,32 @@ spec:
                   - /tmp/keystone-api.sh
                   - stop
           ports:
+            {{- $portInt := tuple "identity" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
             - name: ks-pub
-              containerPort: {{ tuple "identity" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
-            - name: ks-adm
-              containerPort: {{ tuple "identity" "admin" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+              containerPort: {{ $portInt }}
           readinessProbe:
             httpGet:
               scheme: HTTP
               path: /
-              port: {{ tuple "identity" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+              port: {{ $portInt }}
             initialDelaySeconds: 15
             periodSeconds: 10
           volumeMounts:
           - name: etckeystone
             mountPath: /etc/keystone
+          - name: logs-apache
+            mountPath: /var/log/apache2
+          - name: run-apache
+            mountPath: /var/run/apache2
           - name: wsgi-keystone
             mountPath: /var/www/cgi-bin/keystone
           - name: keystone-etc
             mountPath: /etc/keystone/keystone.conf
             subPath: keystone.conf
+            readOnly: true
+          - name: keystone-etc
+            mountPath: /etc/apache2/ports.conf
+            subPath: ports.conf
             readOnly: true
           - name: keystone-etc
             mountPath: {{ .Values.conf.keystone.DEFAULT.log_config_append }}
@@ -131,9 +140,13 @@ spec:
         emptyDir: {}
       - name: wsgi-keystone
         emptyDir: {}
+      - name: logs-apache
+        emptyDir: {}
+      - name: run-apache
+        emptyDir: {}
       - name: keystone-etc
-        configMap:
-          name: keystone-etc
+        secret:
+          secretName: keystone-etc
           defaultMode: 0444
       - name: keystone-bin
         configMap:

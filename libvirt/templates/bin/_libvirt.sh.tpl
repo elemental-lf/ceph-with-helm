@@ -54,26 +54,32 @@ if [ 0"$hp_count" -gt 0 ]; then
   # Kubernetes 1.10.x introduced cgroup changes that caused the container's
   # hugepage byte limit quota to zero out. This workaround sets that pod limit
   # back to the total number of hugepage bytes available to the baremetal host.
+  if [ -d /sys/fs/cgroup/hugetlb ]; then
+    # NOTE(portdirect): Kubelet will always create pod specific cgroups for
+    # hugetables so if the hugetlb cgroup is enabled, when k8s removes the pod
+    # it will also remove the hugetlb cgroup for the pod, taking any qemu
+    # processes with it.
+    echo "WARN: As the hugetlb cgroup is enabled, it will not be possible to restart the libvirt pod via k8s, without killing VMs."
+    for limit in $(ls /sys/fs/cgroup/hugetlb/kubepods/hugetlb.*.limit_in_bytes); do
+      target="/sys/fs/cgroup/hugetlb/$(dirname $(awk -F: '($2~/hugetlb/){print $3}' /proc/self/cgroup))/$(basename $limit)"
+      # Ensure the write target for the hugepage limit for the pod exists
+      if [ ! -f "$target" ]; then
+        echo "ERROR: Could not find write target for hugepage limit: $target"
+      fi
 
-  for limit in $(ls /sys/fs/cgroup/hugetlb/kubepods/hugetlb.*.limit_in_bytes); do
-    target="/sys/fs/cgroup/hugetlb/$(dirname $(awk -F: '($2~/hugetlb/){print $3}' /proc/self/cgroup))/$(basename $limit)"
-    # Ensure the write target for the hugepage limit for the pod exists
-    if [ ! -f "$target" ]; then
-      echo "ERROR: Could not find write target for hugepage limit: $target"
-    fi
-
-    # Write hugetable limit for pod
-    echo "$(cat $limit)" > "$target"
-  done
+      # Write hugetable limit for pod
+      echo "$(cat $limit)" > "$target"
+    done
+  fi
 
   # Determine OS default hugepage size to use for the hugepage write test
   default_hp_kb="$(cat /proc/meminfo | grep Hugepagesize | tr -cd '[:digit:]')"
 
   # Attempt to write to the hugepage mount to ensure it is operational, but only
   # if we have at least 1 free page.
-  num_free_pages="$(cat /sys/kernel/mm/hugepages/hugepages-${default_hp_kb}kB | tr -cd '[:digit:]')"
+  num_free_pages="$(cat /sys/kernel/mm/hugepages/hugepages-${default_hp_kb}kB/free_hugepages | tr -cd '[:digit:]')"
   echo "INFO: '$num_free_pages' free hugepages of size ${default_hp_kb}kB"
-  if [ 0"$num_free_pages" - gt 0 ]; then
+  if [ 0"$num_free_pages" -gt 0 ]; then
     (fallocate -o0 -l "$default_hp_kb" /dev/hugepages/foo && rm /dev/hugepages/foo) || \
       (echo "ERROR: fallocate failed test at /dev/hugepages with size ${default_hp_kb}kB"
        rm /dev/hugepages/foo

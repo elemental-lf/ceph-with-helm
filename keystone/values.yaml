@@ -161,6 +161,9 @@ dependencies:
           service: local_image_registry
 
 pod:
+  user:
+    keystone:
+      uid: 42424
   affinity:
     anti:
       type:
@@ -402,10 +405,6 @@ conf:
       use: egg:keystone#service_v3
     app:admin_service:
       use: egg:keystone#admin_service
-    pipeline:public_api:
-      pipeline: cors sizelimit http_proxy_to_wsgi osprofiler url_normalize request_id build_auth_context token_auth json_body ec2_extension public_service
-    pipeline:admin_api:
-      pipeline: cors sizelimit http_proxy_to_wsgi osprofiler url_normalize request_id build_auth_context token_auth json_body ec2_extension s3_extension admin_service
     pipeline:api_v3:
       pipeline: cors sizelimit http_proxy_to_wsgi osprofiler url_normalize request_id build_auth_context token_auth json_body ec2_extension_v3 s3_extension service_v3
     app:public_version_service:
@@ -418,12 +417,10 @@ conf:
       pipeline: cors sizelimit osprofiler url_normalize admin_version_service
     composite:main:
       use: egg:Paste#urlmap
-      /v2.0: public_api
       /v3: api_v3
       /: public_version_api
     composite:admin:
       use: egg:Paste#urlmap
-      /v2.0: admin_api
       /v3: api_v3
       /: admin_version_api
   policy:
@@ -553,7 +550,7 @@ conf:
     identity:remove_endpoint_group_from_project: rule:admin_required
     identity:create_identity_provider: rule:admin_required
     identity:list_identity_providers: rule:admin_required
-    identity:get_identity_providers: rule:admin_required
+    identity:get_identity_provider: rule:admin_required
     identity:update_identity_provider: rule:admin_required
     identity:delete_identity_provider: rule:admin_required
     identity:create_protocol: rule:admin_required
@@ -790,15 +787,66 @@ conf:
           sla:
             failure_rate:
               max: 0
-  mpm_event:
-    override:
-    append:
-  wsgi_keystone:
-    override:
-    append:
-  sso_callback_template:
-    override:
-    append:
+  mpm_event: |
+    <IfModule mpm_event_module>
+      ServerLimit         1024
+      StartServers        32
+      MinSpareThreads     32
+      MaxSpareThreads     256
+      ThreadsPerChild     25
+      MaxRequestsPerChild 128
+      ThreadLimit         720
+    </IfModule>
+  wsgi_keystone: |
+    {{- $portInt := tuple "identity" "internal" "api" $ | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+
+    Listen 0.0.0.0:{{ $portInt }}
+
+    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+    LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" proxy
+
+    SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+    CustomLog /dev/stdout combined env=!forwarded
+    CustomLog /dev/stdout proxy env=forwarded
+
+    <VirtualHost *:{{ $portInt }}>
+        WSGIDaemonProcess keystone-public processes=1 threads=1 user=keystone group=keystone display-name=%{GROUP}
+        WSGIProcessGroup keystone-public
+        WSGIScriptAlias / /var/www/cgi-bin/keystone/keystone-wsgi-public
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIPassAuthorization On
+        <IfVersion >= 2.4>
+          ErrorLogFormat "%{cu}t %M"
+        </IfVersion>
+        ErrorLog /dev/stdout
+
+        SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+        CustomLog /dev/stdout combined env=!forwarded
+        CustomLog /dev/stdout proxy env=forwarded
+    </VirtualHost>
+  sso_callback_template: |
+    <!DOCTYPE html>
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Keystone WebSSO redirect</title>
+      </head>
+      <body>
+         <form id="sso" name="sso" action="$host" method="post">
+           Please wait...
+           <br/>
+           <input type="hidden" name="token" id="token" value="$token"/>
+           <noscript>
+             <input type="submit" name="submit_no_javascript" id="submit_no_javascript"
+                value="If your JavaScript is disabled, please click to continue"/>
+           </noscript>
+         </form>
+         <script type="text/javascript">
+           window.onload = function() {
+             document.forms['sso'].submit();
+           }
+         </script>
+      </body>
+    </html>
   logging:
     loggers:
       keys:
@@ -815,7 +863,7 @@ conf:
         - default
     logger_root:
       level: WARNING
-      handlers: null
+      handlers: 'null'
     logger_keystone:
       level: INFO
       handlers:
@@ -913,8 +961,8 @@ endpoints:
         user_domain_name: default
         project_domain_name: default
     hosts:
-      default: keystone-api
-      public: keystone
+      default: keystone
+      internal: keystone-api
     host_fqdn_override:
       default: null
       # NOTE(portdirect): this chart supports TLS for fqdn over-ridden public
@@ -931,7 +979,9 @@ endpoints:
     port:
       api:
         default: 80
-        admin: 35357
+        # NOTE(portdirect): to retain portability accross images, and allow
+        # running under a unprivileged user simply, we default to a port > 1000.
+        internal: 5000
   oslo_db:
     namespace: null
     auth:

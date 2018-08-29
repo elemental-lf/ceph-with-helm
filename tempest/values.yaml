@@ -244,8 +244,8 @@ endpoints:
         user_domain_name: service
         project_domain_name: service
     hosts:
-      default: keystone-api
-      public: keystone
+      default: keystone
+      internal: keystone-api
     host_fqdn_override:
       default: null
     path:
@@ -255,7 +255,7 @@ endpoints:
     port:
       api:
         default: 80
-        admin: 35357
+        internal: 5000
 
 manifests:
   configmap_bin: true

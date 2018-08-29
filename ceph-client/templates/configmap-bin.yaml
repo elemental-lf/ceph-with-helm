@@ -48,9 +48,4 @@ data:
   mgr-check.sh: |
 {{ tuple "bin/mgr/_check.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 
-  rgw-start.sh: |
-{{ tuple "bin/rgw/_start.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-  rgw-init-keystone.sh: |
-{{ tuple "bin/rgw/_init_keystone.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-
 {{- end }}

@@ -110,6 +110,8 @@ spec:
               value: {{ .Values.network.public | quote }}
             - name: KUBECTL_PARAM
               value: {{ tuple $envAll "ceph" "mon" | include "helm-toolkit.snippets.kubernetes_kubectl_params" | indent 10 }}
+            - name: MON_PORT
+              value: {{ tuple "ceph_mon" "internal" "mon" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" | quote }}
             - name: MON_IP
               valueFrom:
                 fieldRef:
@@ -130,7 +132,7 @@ spec:
                   command:
                     - /tmp/mon-stop.sh
           ports:
-            - containerPort: 6789
+            - containerPort: {{ tuple "ceph_mon" "internal" "mon" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
           livenessProbe:
            exec:
             command:
@@ -176,10 +178,6 @@ spec:
               readOnly: true
             - name: ceph-bootstrap-mds-keyring
               mountPath: /var/lib/ceph/bootstrap-mds/ceph.keyring
-              subPath: ceph.keyring
-              readOnly: true
-            - name: ceph-bootstrap-rgw-keyring
-              mountPath: /var/lib/ceph/bootstrap-rgw/ceph.keyring
               subPath: ceph.keyring
               readOnly: true
             - name: pod-var-lib-ceph
@@ -241,7 +239,4 @@ spec:
         - name: ceph-bootstrap-mds-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.mds }}
-        - name: ceph-bootstrap-rgw-keyring
-          secret:
-            secretName: {{ .Values.secrets.keyrings.rgw }}
 {{- end }}

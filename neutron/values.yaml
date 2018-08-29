@@ -1489,7 +1489,7 @@ conf:
         - default
     logger_root:
       level: WARNING
-      handlers: null
+      handlers: 'null'
     logger_neutron:
       level: INFO
       handlers:
@@ -1770,8 +1770,8 @@ endpoints:
         user_domain_name: service
         project_domain_name: service
     hosts:
-      default: keystone-api
-      public: keystone
+      default: keystone
+      internal: keystone-api
     host_fqdn_override:
       default: null
     path:
@@ -1781,7 +1781,7 @@ endpoints:
     port:
       api:
         default: 80
-        admin: 35357
+        internal: 5000
   network:
     name: neutron
     hosts:

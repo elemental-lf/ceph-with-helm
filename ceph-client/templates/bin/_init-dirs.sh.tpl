@@ -20,26 +20,21 @@ set -ex
 export LC_ALL=C
 : "${HOSTNAME:=$(uname -n)}"
 : "${MGR_NAME:=${HOSTNAME}}"
-: "${RGW_NAME:=${HOSTNAME}}"
 : "${MDS_NAME:=mds-${HOSTNAME}}"
 : "${MDS_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-mds/${CLUSTER}.keyring}"
-: "${RGW_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-rgw/${CLUSTER}.keyring}"
 : "${OSD_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-osd/${CLUSTER}.keyring}"
 
-for keyring in ${OSD_BOOTSTRAP_KEYRING} ${MDS_BOOTSTRAP_KEYRING} ${RGW_BOOTSTRAP_KEYRING}; do
+for keyring in ${OSD_BOOTSTRAP_KEYRING} ${MDS_BOOTSTRAP_KEYRING}; do
   mkdir -p "$(dirname "$keyring")"
 done
 
 # Let's create the ceph directories
-for DIRECTORY in mds radosgw tmp mgr; do
+for DIRECTORY in mds tmp mgr; do
   mkdir -p "/var/lib/ceph/${DIRECTORY}"
 done
 
 # Create socket directory
 mkdir -p /run/ceph
-
-# Creating rados directories
-mkdir -p "/var/lib/ceph/radosgw/${RGW_NAME}"
 
 # Create the MDS directory
 mkdir -p "/var/lib/ceph/mds/${CLUSTER}-${MDS_NAME}"
