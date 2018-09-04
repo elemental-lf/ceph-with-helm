@@ -102,6 +102,17 @@ pod:
         limits:
           memory: "1024Mi"
           cpu: "2000m"
+      rgw_s3_admin:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+
+ceph_client:
+  configmap: ceph-etc
+
 secrets:
   keyrings:
     mon: ceph-mon-keyring
