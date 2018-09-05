@@ -30,6 +30,7 @@ images:
     ceph_rgw: 'docker.io/ceph/daemon:tag-build-master-luminous-ubuntu-16.04'
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     image_repo_sync: docker.io/docker:17.07.0
+    rgw_s3_admin: 'docker.io/port/ceph-config-helper:v1.10.3'
     ks_endpoints: 'docker.io/openstackhelm/heat:newton'
     ks_service: 'docker.io/openstackhelm/heat:newton'
     ks_user: 'docker.io/openstackhelm/heat:newton'
@@ -125,6 +126,8 @@ secrets:
     admin: ceph-keystone-admin
     swift: ceph-keystone-user
     user_rgw: ceph-keystone-user-rgw
+  rgw_s3:
+    admin: radosgw-s3-admin-creds
   tls:
     object_store:
       api:
@@ -275,6 +278,9 @@ conf:
       rgw_swift_url: null
       #NOTE (portdirect): See http://tracker.ceph.com/issues/21226
       rgw_keystone_token_cache_size: 0
+  rgw_s3:
+    enabled: false
+    admin_caps: "users=*;buckets=*;zone=*"
   ceph:
     global:
       # auth
@@ -328,6 +334,11 @@ dependencies:
       services:
         - endpoint: internal
           service: identity
+    rgw_s3_admin:
+      services:
+        - endpoint: internal
+          service: ceph_object_store
+
 bootstrap:
   enabled: false
   script: |
@@ -411,6 +422,29 @@ endpoints:
       api:
         default: 8088
         public: 80
+  ceph_object_store:
+    name: radosgw
+    namespace: null
+    auth:
+      admin:
+        # NOTE(srwilkers): These defaults should be used for testing only, and
+        # should be changed before deploying to production
+        username: s3_admin
+        access_key: "32AGKHCIG3FZ62IY1MEC"
+        secret_key: "22S9iCLHcHId9AzAQD32O8jrq7DpFX9RHIOOC4NL"
+    hosts:
+      default: ceph-rgw
+      public: radosgw
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+    scheme:
+      default: http
+    port:
+      api:
+        default: 8088
+        public: 80
   ceph_mon:
     namespace: null
     hosts:
@@ -435,6 +469,8 @@ manifests:
   job_ks_endpoints: true
   job_ks_service: true
   job_ks_user: true
+  job_s3_admin: true
+  secret_s3_rgw: true
   secret_keystone_rgw: true
   secret_ingress_tls: true
   secret_keystone_rgw: true
