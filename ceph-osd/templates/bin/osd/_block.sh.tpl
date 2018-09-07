@@ -124,7 +124,11 @@ OSD_ID=$(grep "${MOUNTED_PART}" /proc/mounts | awk '{print $2}' | grep -oh '[0-9
 
 OSD_PATH="${OSD_PATH_BASE}-${OSD_ID}"
 OSD_KEYRING="${OSD_PATH}/keyring"
-OSD_WEIGHT=$(df -P -k "${OSD_PATH}" | tail -1 | awk '{ d= $2/1073741824 ; r = sprintf("%.2f", d); print r }')
+if [ "${OSD_BLUESTORE:-0}" -ne 1 ]; then
+  OSD_WEIGHT=$(df -P -k "${OSD_PATH}" | tail -1 | awk '{ d= $2/1073741824 ; r = sprintf("%.2f", d); print r }')
+else
+  OSD_WEIGHT=$(awk "BEGIN { d= $(blockdev --getsize64 "${OSD_PATH}/block")/1099511627776 ; r = sprintf(\"%.2f\", d); print r }")
+fi
 ceph \
   --cluster "${CLUSTER}" \
   --name="osd.${OSD_ID}" \
