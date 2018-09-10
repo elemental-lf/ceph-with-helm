@@ -42,6 +42,8 @@ spec:
 {{ tuple $envAll "ceph" "mds" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
         {{ .Values.labels.mds.node_selector_key }}: {{ .Values.labels.mds.node_selector_value }}
+      hostNetwork: true
+      dnsPolicy: {{ .Values.pod.dns_policy }}
       initContainers:
 {{ tuple $envAll "mds" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
         - name: ceph-init-dirs
