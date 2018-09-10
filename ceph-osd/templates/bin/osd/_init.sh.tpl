@@ -30,8 +30,14 @@ fi
 
 if [ "x$JOURNAL_TYPE" == "xdirectory" ]; then
   export OSD_JOURNAL="/var/lib/ceph/journal"
-else
+elif [ "x$JOURNAL_TYPE" == "xblock-logical" ]; then
   export OSD_JOURNAL=$(readlink -f ${JOURNAL_LOCATION})
+else
+  export OSD_JOURNAL=''
+fi
+
+if [ -n "$OSD_ROCKS_DB_LOCATION" ]; then
+  export OSD_ROCKS_DB_LOCATION=$(readlink -f ${OSD_ROCKS_DB_LOCATION})
 fi
 
 # Calculate proper device names, given a device and partition number
@@ -207,7 +213,14 @@ function osd_disk_prepare {
     export OSD_JOURNAL="--journal-file"
   fi
 
-  ceph-disk -v prepare ${CLI_OPTS} --journal-uuid ${OSD_JOURNAL_UUID} ${OSD_DEVICE} ${OSD_JOURNAL}
+  if [ "${OSD_BLUESTORE:-0}" -ne 1 ]; then
+    ceph-disk -v prepare ${CLI_OPTS} --journal-uuid ${OSD_JOURNAL_UUID} ${OSD_DEVICE} ${OSD_JOURNAL}
+  else
+    if [ -n "$OSD_ROCKS_DB_LOCATION" ]; then
+      CLI_OPTS="${CLI_OPTS} --block.db ${OSD_ROCKS_DB_LOCATION}"
+    fi
+    ceph-disk -v prepare ${CLI_OPTS} ${OSD_DEVICE}
+  fi
 
   # watch the udev event queue, and exit if all current events are handled
   udevadm settle --timeout=600

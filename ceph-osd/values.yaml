@@ -104,6 +104,8 @@ conf:
         journal:
           type: directory
           location: /var/lib/openstack-helm/ceph/osd/journal-one
+        rocksDb:
+          location: ''
       # - data:
       #     type: block-logical
       #     location: /dev/sde

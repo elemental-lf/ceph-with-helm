@@ -64,6 +64,8 @@ spec:
           #   value: false
           # - name: OSD_FORCE_ZAP
           #   value: false
+          # - name: OSD_ROCK_DB_LOCATION:
+          #   value: empty string
             - name: CLUSTER
               value: "ceph"
           volumeMounts:
@@ -98,6 +100,8 @@ spec:
           #   value: false
           # - name: OSD_FORCE_ZAP
           #   value: false
+          # - name: OSD_ROCK_DB_LOCATION:
+          #   value: empty string
             - name: CLUSTER
               value: "ceph"
             - name: CEPH_GET_ADMIN_KEY
@@ -156,6 +160,8 @@ spec:
           #   value: false
           # - name: OSD_FORCE_ZAP
           #   value: false
+          # - name: OSD_ROCK_DB_LOCATION:
+          #   value: empty string
             - name: CLUSTER
               value: "ceph"
             - name: CEPH_GET_ADMIN_KEY
