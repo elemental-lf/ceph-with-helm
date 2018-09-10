@@ -157,6 +157,9 @@ conf:
       osd_max_object_name_len: 256
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
+    mds:
+      ms_bind_port_min: 7101
+      ms_bind_port_max: 7300
   storage:
     mon:
       directory: /var/lib/openstack-helm/ceph/mon

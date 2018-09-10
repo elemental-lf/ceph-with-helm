@@ -76,15 +76,15 @@ spec:
             - name: CEPHFS_CREATE
               value: "1"
           ports:
-            - containerPort: 6800
+            - containerPort: 7101
           livenessProbe:
               tcpSocket:
-                port: 6800
+                port: 7101
               initialDelaySeconds: 60
               timeoutSeconds: 5
           readinessProbe:
               tcpSocket:
-                port: 6800
+                port: 7101
               timeoutSeconds: 5
           volumeMounts:
             - name: ceph-client-bin
