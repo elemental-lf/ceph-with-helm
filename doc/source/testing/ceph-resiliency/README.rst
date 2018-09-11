@@ -17,6 +17,7 @@ Software Failure
 ================
 * `Monitor failure <./monitor-failure.html>`_
 * `OSD failure <./osd-failure.html>`_
+* `CRUSH Failure Domain <./failure-domain.html>`_
 
 Hardware Failure
 ================

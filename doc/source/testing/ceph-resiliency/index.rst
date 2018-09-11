@@ -10,3 +10,4 @@ Ceph Resiliency
    osd-failure
    disk-failure
    host-failure
+   failure-domain
