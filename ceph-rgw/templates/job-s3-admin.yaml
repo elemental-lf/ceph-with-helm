@@ -95,7 +95,7 @@ spec:
               mountPath: /tmp/rgw-s3-admin.sh
               subPath: rgw-s3-admin.sh
               readOnly: true
-            - name: ceph-rgw-etc
+            - name: ceph-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
               readOnly: true
@@ -110,9 +110,9 @@ spec:
           configMap:
             name: ceph-rgw-bin
             defaultMode: 0555
-        - name: ceph-rgw-etc
+        - name: ceph-etc
           configMap:
-            name: ceph-rgw-etc
+            name: ceph-etc
             defaultMode: 0444
         - name: ceph-client-admin-keyring
           secret:
