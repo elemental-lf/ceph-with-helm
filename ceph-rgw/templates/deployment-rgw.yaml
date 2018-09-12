@@ -61,39 +61,6 @@ spec:
             - name: pod-run
               mountPath: /run
               readOnly: false
-{{ if .Values.conf.rgw_ks.enabled }}
-        - name: ceph-rgw-ks-init
-{{ tuple $envAll "ceph_rgw" | include "helm-toolkit.snippets.image" | indent 10 }}
-{{ tuple $envAll $envAll.Values.pod.resources.rgw | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
-          env:
-            - name: CLUSTER
-              value: "ceph"
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: metadata.name
-{{- with $env := dict "ksUserSecret" .Values.secrets.identity.user_rgw }}
-{{- include "helm-toolkit.snippets.keystone_openrc_env_vars" $env | indent 12 }}
-{{- end }}
-            - name: KEYSTONE_URL
-              value: {{ tuple "identity" "internal" "api" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup" | trimSuffix .Values.endpoints.identity.path.default | quote }}
-            - name: RGW_CIVETWEB_PORT
-              value: "{{ tuple "object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}"
-          command:
-            - /tmp/rgw-init-keystone.sh
-          volumeMounts:
-            - name: pod-etc-ceph
-              mountPath: /etc/ceph
-            - name: ceph-rgw-bin
-              mountPath: /tmp/rgw-init-keystone.sh
-              subPath: rgw-init-keystone.sh
-              readOnly: true
-            - name: ceph-etc
-              mountPath: /tmp/ceph.conf
-              subPath: ceph.conf
-              readOnly: true
-{{ end }}
       containers:
         - name: ceph-rgw
 {{ tuple $envAll "ceph_rgw" | include "helm-toolkit.snippets.image" | indent 10 }}
@@ -125,12 +92,10 @@ spec:
               readOnly: true
             - name: pod-etc-ceph
               mountPath: /etc/ceph
-{{- if not .Values.conf.rgw_ks.enabled }}
             - name: ceph-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
               readOnly: true
-{{- end }}
             - name: ceph-bootstrap-rgw-keyring
               mountPath: /var/lib/ceph/bootstrap-rgw/ceph.keyring
               subPath: ceph.keyring
