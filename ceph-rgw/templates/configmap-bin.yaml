@@ -34,10 +34,6 @@ data:
 {{ tuple "bin/rgw/_start.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   rgw-init-keystone.sh: |
 {{ tuple "bin/rgw/_init_keystone.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-  storage-init.sh: |
-{{ tuple "bin/_ceph-rgw-storage-init.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-  ceph-admin-keyring.sh: |
-{{ tuple "bin/_ceph-admin-keyring.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   rgw-s3-admin.sh: |
 {{ tuple "bin/rgw/_rgw-s3-admin.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 {{- end }}
