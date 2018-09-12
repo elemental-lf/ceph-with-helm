@@ -28,9 +28,8 @@ limitations under the License.
 {{- define "ceph.utils.osd_daemonset_overrides" }}
   {{- $daemonset := index . 0 }}
   {{- $daemonset_yaml := index . 1 }}
-  {{- $configmap_include := index . 2 }}
-  {{- $configmap_name := index . 3 }}
-  {{- $context := index . 4 }}
+  {{- $configmap_name := index . 2 }}
+  {{- $context := index . 3 }}
   {{- $_ := unset $context ".Files" }}
   {{- $_ := set $context.Values "__daemonset_yaml" $daemonset_yaml }}
   {{- $daemonset_root_name := printf "ceph_%s" $daemonset }}
@@ -201,7 +200,6 @@ limitations under the License.
     {{- $_ := set $context.Values "__daemonset_list" $list_aggregate }}
   {{- end }}
 
-  {{- $_ := set $context.Values "__last_configmap_name" $configmap_name }}
   {{- range $current_dict := $context.Values.__daemonset_list }}
 
     {{- $context_novalues := omit $context "Values" }}
@@ -241,20 +239,6 @@ limitations under the License.
     {{- end }}
     {{- $_ := set $context.Values.__daemonset_yaml.spec.template.spec "containers" $context.Values.__containers_list }}
 
-    {{/* cross-reference configmap name to container volume definitions */}}
-    {{- $_ := set $context.Values "__volume_list" list }}
-    {{- range $current_volume := $context.Values.__daemonset_yaml.spec.template.spec.volumes }}
-      {{- $_ := set $context.Values "__volume" $current_volume }}
-      {{- if hasKey $context.Values.__volume "configMap" }}
-        {{- if eq $context.Values.__volume.configMap.name $context.Values.__last_configmap_name }}
-          {{- $_ := set $context.Values.__volume.configMap "name" $current_dict.dns_1123_name }}
-        {{- end }}
-      {{- end }}
-      {{- $updated_list := append $context.Values.__volume_list $context.Values.__volume }}
-      {{- $_ := set $context.Values "__volume_list" $updated_list }}
-    {{- end }}
-    {{- $_ := set $context.Values.__daemonset_yaml.spec.template.spec "volumes" $context.Values.__volume_list }}
-
     {{/* populate scheduling restrictions */}}
     {{- if hasKey $current_dict "matchExpressions" }}
       {{- if not $context.Values.__daemonset_yaml.spec.template.spec }}{{- $_ := set $context.Values.__daemonset_yaml.spec.template "spec" dict }}{{- end }}
@@ -272,13 +256,6 @@ limitations under the License.
     {{- if not $context.Values.__daemonset_yaml.spec.template }}{{- $_ := set $context.Values.__daemonset_yaml.spec "template" dict }}{{- end }}
     {{- if not $context.Values.__daemonset_yaml.spec.template.metadata }}{{- $_ := set $context.Values.__daemonset_yaml.spec.template "metadata" dict }}{{- end }}
     {{- if not $context.Values.__daemonset_yaml.spec.template.metadata.annotations }}{{- $_ := set $context.Values.__daemonset_yaml.spec.template.metadata "annotations" dict }}{{- end }}
-    {{- $cmap := list $current_dict.dns_1123_name $current_dict.nodeData | include $configmap_include }}
-    {{- $values_hash := $cmap | quote | sha256sum }}
-    {{- $_ := set $context.Values.__daemonset_yaml.spec.template.metadata.annotations "configmap-etc-hash" $values_hash }}
-
-    {{/* generate configmap */}}
----
-{{ $cmap }}
 
     {{/* generate daemonset yaml */}}
 {{ range $k, $v := index $current_dict.nodeData.Values.conf.storage "osd" }}
@@ -356,6 +333,5 @@ limitations under the License.
 {{ end }}
 
 ---
-    {{- $_ := set $context.Values "__last_configmap_name" $current_dict.dns_1123_name }}
   {{- end }}
 {{- end }}
