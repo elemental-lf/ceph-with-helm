@@ -188,6 +188,10 @@ spec:
               mountPath: /var/lib/ceph/bootstrap-mds/ceph.keyring
               subPath: ceph.keyring
               readOnly: true
+            - name: ceph-bootstrap-rgw-keyring
+              mountPath: /var/lib/ceph/bootstrap-rgw/ceph.keyring
+              subPath: ceph.keyring
+              readOnly: true
             - name: pod-var-lib-ceph
               mountPath: /var/lib/ceph
               readOnly: false
@@ -247,4 +251,7 @@ spec:
         - name: ceph-bootstrap-mds-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.mds }}
+        - name: ceph-bootstrap-rgw-keyring
+          secret:
+            secretName: {{ .Values.secrets.keyrings.rgw }}
 {{- end }}

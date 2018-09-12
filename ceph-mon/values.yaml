@@ -109,6 +109,7 @@ secrets:
     mon: ceph-mon-keyring
     mds: ceph-bootstrap-mds-keyring
     osd: ceph-bootstrap-osd-keyring
+    rgw: ceph-bootstrap-rgw-keyring
     mgr: ceph-bootstrap-mgr-keyring
     admin: ceph-client-admin-keyring
 
@@ -158,6 +159,10 @@ conf:
           [client.bootstrap-osd]
             key = {{ key }}
             caps mon = "allow profile bootstrap-osd"
+        rgw: |
+          [client.bootstrap-rgw]
+            key = {{ key }}
+            caps mon = "allow profile bootstrap-rgw"
   ceph:
     global:
       # auth

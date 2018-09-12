@@ -16,7 +16,7 @@ limitations under the License.
 
 {{- if and .Values.manifests.job_keyring .Values.deployment.storage_secrets }}
 {{- $envAll := . }}
-{{- range $key1, $cephBootstrapKey := tuple "mds" "osd" "mon" "mgr" }}
+{{- range $key1, $cephBootstrapKey := (omit .Values.secrets.keyrings "admin" | keys) }}
 {{- $jobName := print $cephBootstrapKey "-keyring-generator" }}
 
 {{- $serviceAccountName := print "ceph-" $jobName }}
