@@ -14,13 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and .Values.manifests.configmap_bin_common .Values.deployment.ceph }}
+{{- if and .Values.manifests.configmap_provisioners_bin .Values.deployment.ceph }}
 {{- $envAll := . }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ printf "%s-%s" $envAll.Release.Name "ceph-prov-bin" | quote }}
+  name: ceph-provisioners-bin
 data:
   provisioner-cephfs-start.sh: |
 {{ tuple "bin/provisioner/cephfs/_start.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}

@@ -24,6 +24,10 @@ CHARTS := $(filter-out $(EXCLUDES), $(patsubst %/.,%,$(wildcard */.)))
 all: $(CHARTS)
 
 $(CHARTS):
+	for dir in ceph-osd ceph-client ceph-provisioners ceph-rgw; do \
+		cmp ceph-mon/values.yaml $$dir/values.yaml || \
+			cp ceph-mon/values.yaml $$dir/values.yaml; \
+	done
 	@if [ -d $@ ]; then \
 		echo; \
 		echo "===== Processing [$@] chart ====="; \

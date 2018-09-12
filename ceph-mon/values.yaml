@@ -20,16 +20,33 @@
 deployment:
   ceph: true
   storage_secrets: true
+  client_secrets: false
+  rbd_provisioner: true
+  cephfs_provisioner: true
+
+release_group: null
 
 images:
   pull_policy: IfNotPresent
   tags:
-    ceph_bootstrap: 'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
-    ceph_config_helper: 'docker.io/port/ceph-config-helper:v1.10.3'
-    ceph_mon: 'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
-    ceph_mon_check: 'docker.io/port/ceph-config-helper:v1.10.3'
+    # See https://github.com/ceph/ceph-container for tags
+    ceph_bootstrap:          'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
+    ceph_mon:                'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
+    ceph_osd:                'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
+    ceph_mgr:                'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
+    ceph_mds:                'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
+    ceph_rgw:                'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
+    # See https://quay.io/repository/external_storage/cephfs-provisioner?tab=tags for tags
+    ceph_cephfs_provisioner: 'quay.io/external_storage/cephfs-provisioner:v2.1.0-k8s1.11'
+    # See https://quay.io/repository/external_storage/rbd-provisioner?tab=tags for tags
+    ceph_rbd_provisioner:    'quay.io/external_storage/rbd-provisioner:v2.1.1-k8s1.11'
+    #
     fluentbit: docker.io/fluent/fluent-bit:0.12.14
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
+    ceph_config_helper: 'docker.io/port/ceph-config-helper:v1.10.3'
+    ceph_mon_check: 'docker.io/port/ceph-config-helper:v1.10.3'
+    ceph_rbd_pool: 'docker.io/port/ceph-config-helper:v1.10.3'
+    rgw_s3_admin: 'docker.io/port/ceph-config-helper:v1.10.3'
   local_registry:
     active: false
     exclude: []
@@ -41,14 +58,42 @@ labels:
   mon:
     node_selector_key: ceph-mon
     node_selector_value: enabled
+  osd:
+    node_selector_key: ceph-osd
+    node_selector_value: enabled
+  provisioner:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  mds:
+    node_selector_key: ceph-mds
+    node_selector_value: enabled
+  mgr:
+    node_selector_key: ceph-mgr
+    node_selector_value: enabled
+  rgw:
+    node_selector_key: ceph-rgw
+    node_selector_value: enabled
 
 tolerations:
   mon: []
+  mgr: []
+  provisioner: []
 
 pod:
   dns_policy: "ClusterFirstWithHostNet"
+  affinity:
+    anti:
+      type:
+        default: preferredDuringSchedulingIgnoredDuringExecution
+      topologyKey:
+        default: kubernetes.io/hostname
   replicas:
     mon_check: 1
+    mds: 2
+    mgr: 2
+    cephfs_provisioner: 2
+    rbd_provisioner: 2
+    rgw: 2
   affinity:
     anti:
       type:
@@ -71,7 +116,49 @@ pod:
       limits:
         memory: "50Mi"
         cpu: "500m"
+    osd:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1024Mi"
+        cpu: "1000m"
     fluentbit:
+      requests:
+        memory: "5Mi"
+        cpu: "250m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
+    mds:
+      requests:
+        memory: "10Mi"
+        cpu: "250m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
+    mgr:
+      requests:
+        memory: "5Mi"
+        cpu: "250m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
+    rbd_provisioner:
+      requests:
+        memory: "5Mi"
+        cpu: "250m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
+    cephfs_provisioner:
+      requests:
+        memory: "5Mi"
+        cpu: "250m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
+    rgw:
       requests:
         memory: "5Mi"
         cpu: "250m"
@@ -93,6 +180,16 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "500m"
+      rgw_s3_admin:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+
+ceph_client:
+  configmap: ceph-etc
 
 secrets:
   keyrings:
@@ -102,10 +199,32 @@ secrets:
     rgw: ceph-bootstrap-rgw-keyring
     mgr: ceph-bootstrap-mgr-keyring
     admin: ceph-client-admin-keyring
+  rgw_s3:
+    admin: radosgw-s3-admin-creds
+  # ceph-rgw
+  tls:
+    object_store:
+      api:
+        public: ceph-tls-public
 
 network:
   public: 192.168.0.0/16
   cluster: 192.168.0.0/16
+  # ceph-rgw
+  api:
+    ingress:
+      public: false
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        nginx.org/proxy-max-temp-file-size: "0"
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: 30004
 
 jobs:
   pool_checkPGs:
@@ -122,6 +241,10 @@ jobs:
     startingDeadlineSecs: 60
 
 conf:
+  features:
+    mds: true
+    mgr: true
+    rgw: true
   templates:
     keyring:
       admin: |
@@ -170,6 +293,148 @@ conf:
   storage:
     mon:
       directory: /var/lib/openstack-helm/ceph/mon
+    # NOTE(portdirect): for homogeneous clusters the `osd` key can be used to
+    # define OSD pods that will be deployed across the cluster.
+    osd:
+      - data:
+          type: directory
+          location: /var/lib/openstack-helm/ceph/osd/osd-one
+        journal:
+          type: directory
+          location: /var/lib/openstack-helm/ceph/osd/journal-one
+        rocksDb:
+          location: ''
+      # - data:
+      #     type: block-logical
+      #     location: /dev/sde
+      #   journal:
+      #     type: block-logical
+      #     location: /dev/sdf
+      # - data:
+      #     type: block-logical
+      #     location: /dev/sdg
+      #   journal:
+      #     type: directory
+      #     location: /var/lib/openstack-helm/ceph/osd/journal-sdg
+# NOTE(portdirect): for heterogeneous clusters the overrides section can be used to define
+# OSD pods that will be deployed upon specifc nodes.
+# overrides:
+#   ceph_osd:
+#     hosts:
+#       - name: host1.fqdn
+#         conf:
+#           storage:
+#             osd:
+#               - data:
+#                   type: directory
+#                   location: /var/lib/openstack-helm/ceph/osd/data-three
+#                 journal:
+#                   type: directory
+#                   location: /var/lib/openstack-helm/ceph/osd/journal-three
+  pool:
+  #NOTE(portdirect): this drives a simple approximation of
+  # https://ceph.com/pgcalc/, the `target.osd` key should be set to match the
+  # expected number of osds in a cluster, and the `target.pg_per_osd` should be
+  # set to match the desired number of placement groups on each OSD.
+    crush:
+      #NOTE(portdirect): to use RBD devices with Ubuntu 16.04's 4.4.x series
+      # kernel this should be set to `hammer`
+      tunables: null
+    target:
+      #NOTE(portdirect): arbitrarily we set the default number of expected OSD's to 5
+      # to match the number of nodes in the OSH gate.
+      osd: 5
+      pg_per_osd: 100
+    default:
+      #NOTE(portdirect): this should be 'same_host' for a single node
+      # cluster to be in a healthy state
+      #NOTE(lf): Only used for replicated pools, erasure coded pools
+      # automatically generate a rule matching the selected profile
+      crush_rule: replicated_rule
+    #NOTE(portdirect): this section describes the pools that will be managed by
+    # the ceph pool management job, as it tunes the pgs and crush rule, based on
+    # the above.
+    #NOTE(lf): For erasure coded pools the `replication` key should be set to k+m
+    # to get the pg calculation right.
+    spec:
+      # RBD pool
+      - name: rbd
+        application: rbd
+        replication: 3
+        percent_total_data: 40
+      # CephFS pools
+      - name: cephfs_metadata
+        application: cephfs
+        replication: 3
+        percent_total_data: 5
+      - name: cephfs_data
+        application: cephfs
+        replication: 3
+        percent_total_data: 10
+      # RadosGW pools
+      - name: .rgw.root
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.control
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.data.root
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.gc
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.log
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.intent-log
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.meta
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.usage
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.users.keys
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.users.email
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.users.swift
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.users.uid
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.buckets.extra
+        application: rgw
+        replication: 3
+        percent_total_data: 0.1
+      - name: default.rgw.buckets.index
+        application: rgw
+        replication: 3
+        percent_total_data: 3
+      - name: default.rgw.buckets.data
+        application: rgw
+        replication: 3
+        percent_total_data: 34.8
+  rgw_s3:
+    enabled: false
+    admin_caps: "users=*;buckets=*;zone=*"
   fluentbit:
     - service:
         header: service
@@ -202,6 +467,7 @@ conf:
         Time_Keep: On
         Types: "pid:integer"
 
+
 logging:
   fluentd: false
 
@@ -225,8 +491,87 @@ dependencies:
       services:
         - endpoint: discovery
           service: ceph_mon
+    osd:
+      jobs:
+        - ceph-storage-keys-generator
+        - ceph-osd-keyring-generator
+      services:
+        - endpoint: internal
+          service: ceph_mon
     storage_keys_generator:
       jobs: null
+    cephfs_client_key_generator:
+      jobs: null
+    cephfs_provisioner:
+      jobs:
+        - labels:
+            application: ceph
+            component: rbd-pool
+      services:
+        - endpoint: internal
+          service: ceph_mon
+    mds:
+      jobs:
+        - name: ceph-storage-keys-generator
+        - name: ceph-mds-keyring-generator
+        - labels:
+            application: ceph
+            component: rbd-pool
+      services:
+        - endpoint: internal
+          service: ceph_mon
+    mgr:
+      jobs:
+        - ceph-storage-keys-generator
+        - ceph-mgr-keyring-generator
+      services:
+        - endpoint: internal
+          service: ceph_mon
+    namespace_client_key_cleaner:
+      jobs: null
+    namespace_client_key_generator:
+      jobs: null
+    rbd_pool:
+      services:
+        - endpoint: internal
+          service: ceph_mon
+    rbd_provisioner:
+      jobs:
+        - labels:
+            application: ceph
+            component: rbd-pool
+      services:
+        - endpoint: internal
+          service: ceph_mon
+    rgw_s3_admin:
+      services:
+        - endpoint: internal
+          service: ceph_object_store
+
+# Uncomment below to enable mgr modules
+# For a list of available modules:
+#  http://docs.ceph.com/docs/master/mgr/
+# This overrides mgr_initial_modules (default: restful, status)
+# Any module not listed here will be disabled
+ceph_mgr_enabled_modules:
+  - restful
+  - status
+  - prometheus
+  - balancer
+
+# You can configure your mgr modules
+# below. Each module has its own set
+# of key/value. Refer to the doc
+# above for more info. For example:
+#ceph_mgr_modules_config:
+#  dashboard:
+#    port: 7000
+#  localpool:
+#    failure_domain: host
+#    subtree: rack
+#    pg_num: "128"
+#    num_rep: "3"
+#    min_size: "2"
 
 # if you change provision_storage_class to false
 # it is presumed you manage your own storage
@@ -235,7 +580,7 @@ storageclass:
   rbd:
     provision_storage_class: true
     provisioner: ceph.com/rbd
-    name: general
+    name: rbd
     monitors: null
     pool: rbd
     admin_id: admin
@@ -266,6 +611,65 @@ endpoints:
     port:
       mon:
         default: 6789
+  ceph_mgr:
+    namespace: null
+    hosts:
+      default: ceph-mgr
+    host_fqdn_override:
+      default: null
+    port:
+      mgr:
+        default: 7000
+      metrics:
+        default: 9283
+    scheme:
+      default: http
+  object_store:
+    name: swift
+    namespace: null
+    hosts:
+      default: ceph-rgw
+      public: radosgw
+    host_fqdn_override:
+      default: null
+      # NOTE(portdirect): this chart supports TLS for fqdn over-ridden public
+      # endpoints using the following format:
+      # public:
+      #   host: null
+      #   tls:
+      #     crt: null
+      #     key: null
+    path:
+      default: /swift/v1/KEY_$(tenant_id)s
+    scheme:
+      default: http
+    port:
+      api:
+        default: 8088
+        public: 80      
+  ceph_object_store:
+    name: radosgw
+    namespace: null
+    auth:
+      admin:
+        # NOTE(srwilkers): These defaults should be used for testing only, and
+        # should be changed before deploying to production
+        username: s3_admin
+        access_key: "32AGKHCIG3FZ62IY1MEC"
+        secret_key: "22S9iCLHcHId9AzAQD32O8jrq7DpFX9RHIOOC4NL"
+    hosts:
+      default: ceph-rgw
+      public: radosgw
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+    scheme:
+      default: http
+    port:
+      api:
+        default: 8088
+        public: 80
   fluentd:
     namespace: null
     name: fluentd
@@ -282,9 +686,17 @@ endpoints:
         default: 24224
       metrics:
         default: 24220
+        
+monitoring:
+  prometheus:
+    enabled: true
+    ceph_mgr:
+      scrape: true
+      port: 9283
 
 manifests:
-  configmap_bin: true
+  # ceph-mon
+  configmap_mon_bin: true
   configmap_etc: true
   configmap_templates: true
   daemonset_mon: true
@@ -295,3 +707,31 @@ manifests:
   service_mon_discovery: true
   job_storage_admin_keys: true
   cronjob_checkPGs: true
+  # ceph-osd
+  configmap_osd_bin: true
+  daemonset_osd: true
+  # ceph-client
+  configmap_client_bin: true
+  deployment_mds: true
+  deployment_mgr: true
+  job_cephfs_client_key: true
+  job_rbd_pool: true
+  service_mgr: true
+  # ceph-provisioners
+  configmap_provisioners_bin: true
+  deployment_rbd_provisioner: true
+  deployment_cephfs_provisioner: true
+  job_cephfs_client_key: true
+  job_namespace_client_key_cleaner: true
+  job_namespace_client_key: true
+  storageclass_cephfs: true
+  storageclass_rbd: true
+  # ceph-rgw
+  configmap_rgw_bin: true
+  deployment_rgw: true
+  ingress_rgw: true
+  job_s3_admin: true
+  secret_s3_rgw: true
+  secret_ingress_tls: true
+  service_ingress_rgw: true
+  service_rgw: true
