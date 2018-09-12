@@ -17,4 +17,6 @@ limitations under the License.
 */}}
 
 set -ex
-{{ .Values.bootstrap.script | default "echo 'Not Enabled'" }}
+if [ -z "$(ceph config get osd.0 public_network)" ]; then
+ ceph config assimilate-conf -i /etc/ceph/ceph-bootstrap.conf
+fi

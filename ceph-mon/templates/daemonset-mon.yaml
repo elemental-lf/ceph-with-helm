@@ -168,7 +168,7 @@ spec:
               mountPath: /tmp/utils-checkPGs.sh
               subPath: utils-checkPGs.sh
               readOnly: true
-            - name: ceph-mon-etc
+            - name: ceph-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
               readOnly: true
@@ -213,11 +213,11 @@ spec:
               readOnly: true
             - name: varlog
               mountPath: /var/log/ceph
-            - name: ceph-mon-etc
+            - name: ceph-etc
               mountPath: /fluent-bit/etc/fluent-bit.conf
               subPath: fluent-bit.conf
               readOnly: true
-            - name: ceph-mon-etc
+            - name: ceph-etc
               mountPath: /fluent-bit/etc/parsers.conf
               subPath: parsers.conf
               readOnly: true
@@ -229,9 +229,9 @@ spec:
           configMap:
             name: ceph-mon-bin
             defaultMode: 0555
-        - name: ceph-mon-etc
+        - name: ceph-etc
           configMap:
-            name: ceph-mon-etc
+            name: ceph-etc
             defaultMode: 0444
         - name: pod-var-lib-ceph
           hostPath:
