@@ -59,7 +59,7 @@ spec:
               mountPath: /tmp/pool-calc.py
               subPath: pool-calc.py
               readOnly: true
-            - name: ceph-client-etc
+            - name: ceph-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
               readOnly: true
@@ -74,9 +74,9 @@ spec:
               mountPath: /run
               readOnly: false
       volumes:
-        - name: ceph-client-etc
+        - name: ceph-etc
           configMap:
-            name: ceph-client-etc
+            name: ceph-etc
             defaultMode: 0444
         - name: ceph-client-bin
           configMap:

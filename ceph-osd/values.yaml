@@ -20,8 +20,8 @@
 images:
   pull_policy: IfNotPresent
   tags:
-    ceph_osd: 'docker.io/ceph/daemon:tag-build-master-luminous-ubuntu-16.04'
-    ceph_bootstrap: 'docker.io/ceph/daemon:tag-build-master-luminous-ubuntu-16.04'
+    ceph_osd: 'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
+    ceph_bootstrap: 'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
     fluentbit: docker.io/fluent/fluent-bit:0.12.14
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     image_repo_sync: docker.io/docker:17.07.0
@@ -249,6 +249,5 @@ endpoints:
 
 manifests:
   configmap_bin: true
-  configmap_etc: true
   daemonset_osd: true
   job_image_repo_sync: true

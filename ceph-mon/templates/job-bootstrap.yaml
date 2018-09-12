@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and .Values.manifests.job_bootstrap .Values.bootstrap.enabled }}
+{{- if .Values.manifests.job_bootstrap }}
 {{- $envAll := . }}
 
 {{- $serviceAccountName := "ceph-bootstrap"}}
@@ -47,9 +47,13 @@ spec:
               mountPath: /tmp/bootstrap.sh
               subPath: bootstrap.sh
               readOnly: true
-            - name: ceph-mon-etc
+            - name: ceph-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
+              readOnly: true
+            - name: ceph-etc
+              mountPath: /etc/ceph/ceph-bootstrap.conf
+              subPath: ceph-bootstrap.conf
               readOnly: true
             - name: ceph-client-admin-keyring
               mountPath: /etc/ceph/ceph.client.admin.keyring
@@ -60,9 +64,9 @@ spec:
           configMap:
             name: ceph-mon-bin
             defaultMode: 0555
-        - name: ceph-mon-etc
+        - name: ceph-etc
           configMap:
-            name: ceph-mon-etc
+            name: ceph-etc
             defaultMode: 0444
         - name: ceph-client-admin-keyring
           secret:
