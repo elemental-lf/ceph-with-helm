@@ -380,7 +380,6 @@ monitoring:
 
 manifests:
   configmap_bin: true
-  configmap_etc: true
   deployment_mds: true
   deployment_mgr: true
   job_bootstrap: false
