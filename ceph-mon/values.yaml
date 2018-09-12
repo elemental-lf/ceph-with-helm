@@ -30,12 +30,9 @@ images:
     ceph_mon_check: 'docker.io/port/ceph-config-helper:v1.10.3'
     fluentbit: docker.io/fluent/fluent-bit:0.12.14
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
-    image_repo_sync: docker.io/docker:17.07.0
   local_registry:
     active: false
-    exclude:
-      - dep_check
-      - image_repo_sync
+    exclude: []
 
 labels:
   job:
@@ -96,13 +93,6 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "500m"
-      image_repo_sync:
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
-        limits:
-          memory: "1024Mi"
-          cpu: "2000m"
 
 secrets:
   keyrings:
@@ -216,14 +206,6 @@ logging:
   fluentd: false
 
 dependencies:
-  dynamic:
-    common:
-      local_image_registry:
-        jobs:
-          - ceph-mon-image-repo-sync
-        services:
-          - endpoint: node
-            service: local_image_registry
   static:
     bootstrap:
       jobs: null
@@ -245,10 +227,6 @@ dependencies:
           service: ceph_mon
     storage_keys_generator:
       jobs: null
-    image_repo_sync:
-      services:
-        - endpoint: internal
-          service: local_image_registry
 
 # if you change provision_storage_class to false
 # it is presumed you manage your own storage
@@ -278,18 +256,6 @@ storageclass:
 
 endpoints:
   cluster_domain_suffix: cluster.local
-  local_image_registry:
-    name: docker-registry
-    namespace: docker-registry
-    hosts:
-      default: localhost
-      internal: docker-registry
-      node: localhost
-    host_fqdn_override:
-      default: null
-    port:
-      registry:
-        node: 5000
   ceph_mon:
     namespace: null
     hosts:
@@ -323,7 +289,6 @@ manifests:
   configmap_templates: true
   daemonset_mon: true
   deployment_moncheck: true
-  job_image_repo_sync: true
   job_bootstrap: true
   job_keyring: true
   service_mon: true

@@ -22,18 +22,15 @@ kind: ConfigMap
 metadata:
   name: ceph-rgw-bin
 data:
-{{- if .Values.images.local_registry.active }}
-  image-repo-sync.sh: |
-{{- include "helm-toolkit.scripts.image_repo_sync" . | indent 4 }}
-{{- end }}
-
   init-dirs.sh: |
 {{ tuple "bin/_init-dirs.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 
   rgw-start.sh: |
 {{ tuple "bin/rgw/_start.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+
   rgw-init-keystone.sh: |
 {{ tuple "bin/rgw/_init_keystone.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+
   rgw-s3-admin.sh: |
 {{ tuple "bin/rgw/_rgw-s3-admin.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 {{- end }}

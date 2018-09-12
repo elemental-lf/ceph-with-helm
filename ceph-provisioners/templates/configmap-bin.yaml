@@ -22,17 +22,12 @@ kind: ConfigMap
 metadata:
   name: {{ printf "%s-%s" $envAll.Release.Name "ceph-prov-bin" | quote }}
 data:
-{{- if .Values.images.local_registry.active }}
-  image-repo-sync.sh: |
-{{- include "helm-toolkit.scripts.image_repo_sync" . | indent 4 }}
-{{- end }}
-
   provisioner-cephfs-start.sh: |
 {{ tuple "bin/provisioner/cephfs/_start.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
+
   provisioner-cephfs-client-key-manager.sh: |
 {{ tuple "bin/provisioner/cephfs/_client-key-manager.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
 
   provisioner-rbd-start.sh: |
 {{ tuple "bin/provisioner/rbd/_start.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
-
 {{- end }}

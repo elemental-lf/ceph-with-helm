@@ -22,24 +22,26 @@ kind: ConfigMap
 metadata:
   name: ceph-osd-bin
 data:
-{{- if .Values.images.local_registry.active }}
-  image-repo-sync.sh: |
-{{- include "helm-toolkit.scripts.image_repo_sync" . | indent 4 }}
-{{- end }}
   osd-start.sh: |
 {{ tuple "bin/osd/_start.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
+
   osd-directory.sh: |
 {{ tuple "bin/osd/_directory.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
   osd-block.sh: |
 {{ tuple "bin/osd/_block.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
+
   osd-init.sh: |
 {{ tuple "bin/osd/_init.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
+
   osd-check.sh: |
 {{ tuple "bin/osd/_check.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+
   osd-stop.sh: |
 {{ tuple "bin/osd/_stop.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
+
   init-dirs.sh: |
 {{ tuple "bin/_init-dirs.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+
 {{ if .Values.logging.fluentd }}
   fluentbit-sidecar.sh: |
 {{ tuple "bin/osd/_fluentbit-sidecar.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}

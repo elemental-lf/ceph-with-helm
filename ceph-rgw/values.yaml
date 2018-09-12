@@ -29,16 +29,13 @@ images:
     ceph_config_helper: 'docker.io/port/ceph-config-helper:v1.10.3'
     ceph_rgw: 'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
-    image_repo_sync: docker.io/docker:17.07.0
     rgw_s3_admin: 'docker.io/port/ceph-config-helper:v1.10.3'
     ks_endpoints: 'docker.io/openstackhelm/heat:newton'
     ks_service: 'docker.io/openstackhelm/heat:newton'
     ks_user: 'docker.io/openstackhelm/heat:newton'
   local_registry:
     active: false
-    exclude:
-      - dep_check
-      - image_repo_sync
+    exclude: []
 
 labels:
   job:
@@ -69,13 +66,6 @@ pod:
         cpu: "500m"
     jobs:
       ceph-rgw-storage-init:
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
-        limits:
-          memory: "1024Mi"
-          cpu: "2000m"
-      image_repo_sync:
         requests:
           memory: "128Mi"
           cpu: "100m"
@@ -299,14 +289,6 @@ conf:
       ms_bind_port_max: 7300
 
 dependencies:
-  dynamic:
-    common:
-      local_image_registry:
-        jobs:
-          - ceph-client-image-repo-sync
-        services:
-          - endpoint: node
-            service: local_image_registry
   static:
     bootstrap:
       jobs: null
@@ -317,10 +299,6 @@ dependencies:
       services:
         - endpoint: internal
           service: keystone-api
-    image_repo_sync:
-      services:
-        - endpoint: internal
-          service: local_image_registry
     ks_endpoints:
       jobs:
         - ceph-ks-service
@@ -356,18 +334,6 @@ bootstrap:
 
 endpoints:
   cluster_domain_suffix: cluster.local
-  local_image_registry:
-    name: docker-registry
-    namespace: docker-registry
-    hosts:
-      default: localhost
-      internal: docker-registry
-      node: localhost
-    host_fqdn_override:
-      default: null
-    port:
-      registry:
-        node: 5000
   identity:
     name: keystone
     namespace: null
@@ -464,7 +430,6 @@ manifests:
   configmap_bin_ks: true
   deployment_rgw: true
   ingress_rgw: true
-  job_image_repo_sync: true
   job_ks_endpoints: true
   job_ks_service: true
   job_ks_user: true
