@@ -7,6 +7,7 @@ export LC_ALL=C
 : "${MDS_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-mds/${CLUSTER}.keyring}"
 : "${OSD_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-osd/${CLUSTER}.keyring}"
 : "${RGW_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-rgw/${CLUSTER}.keyring}"
+: "${RBD_MIRROR_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-rbd/${CLUSTER}.keyring}"
 
 if [[ -z "$CEPH_PUBLIC_NETWORK" ]]; then
   echo "ERROR- CEPH_PUBLIC_NETWORK must be defined as the name of the network for the OSDs"
@@ -81,7 +82,7 @@ if [ ! -e "${MON_DATA_DIR}/keyring" ]; then
   fi
 
   # Testing if it's not the first monitor, if one key doesn't exist we assume none of them exist
-  for KEYRING in ${OSD_BOOTSTRAP_KEYRING} ${MDS_BOOTSTRAP_KEYRING} ${RGW_BOOTSTRAP_KEYRING} ${ADMIN_KEYRING}; do
+  for KEYRING in ${OSD_BOOTSTRAP_KEYRING} ${MDS_BOOTSTRAP_KEYRING} ${RGW_BOOTSTRAP_KEYRING} ${RBD_MIRROR_BOOTSTRAP_KEYRING} ${ADMIN_KEYRING}; do
     ceph-authtool ${MON_KEYRING} --import-keyring ${KEYRING}
   done
 

@@ -34,4 +34,6 @@ data:
 {{ .Values.conf.templates.keyring.bootstrap.osd | indent 4 }}
   bootstrap.keyring.rgw: |
 {{ .Values.conf.templates.keyring.bootstrap.rgw | indent 4 }}
+  bootstrap.keyring.rbd: |
+{{ .Values.conf.templates.keyring.bootstrap.rbd | indent 4 }}
 {{- end }}

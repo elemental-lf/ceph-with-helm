@@ -193,12 +193,13 @@ ceph_client:
 
 secrets:
   keyrings:
+    admin: ceph-client-admin-keyring
     mon: ceph-mon-keyring
     mds: ceph-bootstrap-mds-keyring
     osd: ceph-bootstrap-osd-keyring
     rgw: ceph-bootstrap-rgw-keyring
     mgr: ceph-bootstrap-mgr-keyring
-    admin: ceph-client-admin-keyring
+    rbd: ceph-bootstrap-rbd-keyring
   rgw_s3:
     admin: radosgw-s3-admin-creds
   # ceph-rgw
@@ -276,6 +277,10 @@ conf:
           [client.bootstrap-rgw]
             key = {{ key }}
             caps mon = "allow profile bootstrap-rgw"
+        rbd: |
+          [client.bootstrap-rbd]
+            key = {{ key }}
+            caps mon = "allow profile bootstrap-rbd"
   ceph:
     global:
       # auth
