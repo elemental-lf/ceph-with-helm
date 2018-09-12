@@ -1,1 +1,0 @@
-../common/020-setup-client.sh

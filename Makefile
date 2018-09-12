@@ -16,8 +16,8 @@
 SHELL := /bin/bash
 TASK  := build
 
-EXCLUDES := helm-toolkit doc tests tools logs tmp
-CHARTS := helm-toolkit $(filter-out $(EXCLUDES), $(patsubst %/.,%,$(wildcard */.)))
+EXCLUDES := tools
+CHARTS := $(filter-out $(EXCLUDES), $(patsubst %/.,%,$(wildcard */.)))
 
 .PHONY: $(EXCLUDES) $(CHARTS)
 
@@ -42,18 +42,8 @@ build-%: lint-%
 
 clean:
 	@echo "Clean all build artifacts"
-	rm -f */templates/_partials.tpl */templates/_globals.tpl
 	rm -f *tgz */charts/*tgz */requirements.lock
 	rm -rf */charts */tmpcharts
-
-pull-all-images:
-	@./tools/pull-images.sh
-
-pull-images:
-	@./tools/pull-images.sh $(filter-out $@,$(MAKECMDGOALS))
-
-dev-deploy:
-	@./tools/gate/devel/start.sh $(filter-out $@,$(MAKECMDGOALS))
 
 %:
 	@:
