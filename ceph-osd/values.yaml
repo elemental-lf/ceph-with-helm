@@ -249,6 +249,5 @@ endpoints:
 
 manifests:
   configmap_bin: true
-  configmap_etc: true
   daemonset_osd: true
   job_image_repo_sync: true
