@@ -119,9 +119,9 @@ secrets:
     mon: ceph-mon-keyring
     mds: ceph-bootstrap-mds-keyring
     osd: ceph-bootstrap-osd-keyring
-    rgw: os-ceph-bootstrap-rgw-keyring
+    rgw: ceph-bootstrap-rgw-keyring
     mgr: ceph-bootstrap-mgr-keyring
-    admin: pvc-ceph-client-key
+    admin: ceph-client-admin-keyring
   identity:
     admin: ceph-keystone-admin
     swift: ceph-keystone-user
@@ -314,8 +314,6 @@ dependencies:
         - endpoint: internal
           service: ceph_mon
     rgw:
-      jobs:
-        - ceph-rgw-storage-init
       services:
         - endpoint: internal
           service: keystone-api
@@ -467,7 +465,6 @@ manifests:
   configmap_etc: true
   deployment_rgw: true
   ingress_rgw: true
-  job_ceph_rgw_storage_init: true
   job_image_repo_sync: true
   job_ks_endpoints: true
   job_ks_service: true

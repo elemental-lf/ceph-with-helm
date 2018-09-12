@@ -65,25 +65,6 @@ spec:
       restartPolicy: OnFailure
       nodeSelector:
         {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
-      initContainers:
-{{ tuple $envAll "rgw_s3_admin" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
-        - name: ceph-keyring-placement
-{{ tuple $envAll "ceph_config_helper" | include "helm-toolkit.snippets.image" | indent 10 }}
-          securityContext:
-            runAsUser: 0
-          command:
-            - /tmp/ceph-admin-keyring.sh
-          volumeMounts:
-            - name: etcceph
-              mountPath: /etc/ceph
-            - name: ceph-rgw-bin
-              mountPath: /tmp/ceph-admin-keyring.sh
-              subPath: ceph-admin-keyring.sh
-              readOnly: true
-            - name: ceph-keyring
-              mountPath: /tmp/client-keyring
-              subPath: key
-              readOnly: true
       containers:
         - name: create-s3-admin
           image: {{ .Values.images.tags.rgw_s3_admin }}
@@ -118,9 +99,9 @@ spec:
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
               readOnly: true
-            - name: ceph-keyring
-              mountPath: /tmp/client-keyring
-              subPath: key
+            - name: ceph-client-admin-keyring
+              mountPath: /etc/ceph/ceph.client.admin.keyring
+              subPath: ceph.client.admin.keyring
               readOnly: true
       volumes:
         - name: etcceph
@@ -133,7 +114,7 @@ spec:
           configMap:
             name: ceph-rgw-etc
             defaultMode: 0444
-        - name: ceph-keyring
+        - name: ceph-client-admin-keyring
           secret:
-            secretName: {{ .Values.secrets.keyrings.admin | quote }}
+            secretName: {{ .Values.secrets.keyrings.admin }}
 {{- end }}
