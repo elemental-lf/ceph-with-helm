@@ -19,7 +19,6 @@
 
 deployment:
   ceph: false
-  rgw_keystone_user_and_endpoints: false
 
 release_group: null
 
@@ -30,9 +29,6 @@ images:
     ceph_rgw: 'docker.io/ceph/daemon:v3.1.0-stable-3.1-mimic-centos-7-x86_64'
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     rgw_s3_admin: 'docker.io/port/ceph-config-helper:v1.10.3'
-    ks_endpoints: 'docker.io/openstackhelm/heat:newton'
-    ks_service: 'docker.io/openstackhelm/heat:newton'
-    ks_user: 'docker.io/openstackhelm/heat:newton'
   local_registry:
     active: false
     exclude: []
@@ -65,34 +61,6 @@ pod:
         memory: "50Mi"
         cpu: "500m"
     jobs:
-      ceph-rgw-storage-init:
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
-        limits:
-          memory: "1024Mi"
-          cpu: "2000m"
-      ks-endpoints:
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
-        limits:
-          memory: "1024Mi"
-          cpu: "2000m"
-      ks_service:
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
-        limits:
-          memory: "1024Mi"
-          cpu: "2000m"
-      ks_user:
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
-        limits:
-          memory: "1024Mi"
-          cpu: "2000m"
       rgw_s3_admin:
         requests:
           memory: "128Mi"
@@ -100,6 +68,14 @@ pod:
         limits:
           memory: "1024Mi"
           cpu: "2000m"
+    jobs:
+      secret_provisioning:
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+        requests:
+          memory: "128Mi"
+          cpu: "500m"
 
 ceph_client:
   configmap: ceph-etc
@@ -112,10 +88,6 @@ secrets:
     rgw: ceph-bootstrap-rgw-keyring
     mgr: ceph-bootstrap-mgr-keyring
     admin: ceph-client-admin-keyring
-  identity:
-    admin: ceph-keystone-admin
-    swift: ceph-keystone-user
-    user_rgw: ceph-keystone-user-rgw
   rgw_s3:
     admin: radosgw-s3-admin-creds
   tls:
@@ -256,18 +228,6 @@ conf:
         application: rgw
         replication: 3
         percent_total_data: 34.8
-  rgw_ks:
-    enabled: false
-    config:
-      rgw_keystone_api_version: 3
-      rgw_keystone_accepted_roles: "admin, member"
-      rgw_keystone_implicit_tenants: true
-      rgw_keystone_make_new_tenants: true
-      rgw_s3_auth_use_keystone: true
-      rgw_swift_account_in_url: true
-      rgw_swift_url: null
-      #NOTE (portdirect): See http://tracker.ceph.com/issues/21226
-      rgw_keystone_token_cache_size: 0
   rgw_s3:
     enabled: false
     admin_caps: "users=*;buckets=*;zone=*"
@@ -290,105 +250,13 @@ conf:
 
 dependencies:
   static:
-    bootstrap:
-      jobs: null
-      services:
-        - endpoint: internal
-          service: ceph_mon
-    rgw:
-      services:
-        - endpoint: internal
-          service: keystone-api
-    ks_endpoints:
-      jobs:
-        - ceph-ks-service
-      services:
-        - endpoint: internal
-          service: identity
-    ks_service:
-      services:
-        - endpoint: internal
-          service: identity
-    ks_user:
-      services:
-        - endpoint: internal
-          service: identity
     rgw_s3_admin:
       services:
         - endpoint: internal
           service: ceph_object_store
 
-bootstrap:
-  enabled: false
-  script: |
-    ceph -s
-    function ensure_pool () {
-      ceph osd pool stats $1 || ceph osd pool create $1 $2
-      local test_luminous=$(ceph tell osd.* version | egrep -c "12.2|luminous")
-      if [[ ${test_luminous} -gt 0 ]]; then
-        ceph osd pool application enable $1 $3
-      fi
-    }
-    #ensure_pool volumes 8 cinder
-
-
 endpoints:
   cluster_domain_suffix: cluster.local
-  identity:
-    name: keystone
-    namespace: null
-    auth:
-      admin:
-        region_name: RegionOne
-        username: admin
-        password: password
-        project_name: admin
-        user_domain_name: default
-        project_domain_name: default
-      swift:
-        role: admin
-        region_name: RegionOne
-        username: swift
-        password: password
-        project_name: service
-        user_domain_name: service
-        project_domain_name: service
-    hosts:
-      default: keystone
-      internal: keystone-api
-    host_fqdn_override:
-      default: null
-    path:
-      default: /v3
-    scheme:
-      default: http
-    port:
-      api:
-        default: 80
-        internal: 5000
-  object_store:
-    name: swift
-    namespace: null
-    hosts:
-      default: ceph-rgw
-      public: radosgw
-    host_fqdn_override:
-      default: null
-      # NOTE(portdirect): this chart supports TLS for fqdn over-ridden public
-      # endpoints using the following format:
-      # public:
-      #   host: null
-      #   tls:
-      #     crt: null
-      #     key: null
-    path:
-      default: /swift/v1/KEY_$(tenant_id)s
-    scheme:
-      default: http
-    port:
-      api:
-        default: 8088
-        public: 80
   ceph_object_store:
     name: radosgw
     namespace: null
@@ -427,17 +295,10 @@ endpoints:
 manifests:
   configmap_ceph_templates: true
   configmap_bin: true
-  configmap_bin_ks: true
   deployment_rgw: true
   ingress_rgw: true
-  job_ks_endpoints: true
-  job_ks_service: true
-  job_ks_user: true
   job_s3_admin: true
   secret_s3_rgw: true
-  secret_keystone_rgw: true
   secret_ingress_tls: true
-  secret_keystone_rgw: true
-  secret_keystone: true
   service_ingress_rgw: true
   service_rgw: true
