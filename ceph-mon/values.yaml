@@ -41,7 +41,7 @@ images:
     # See https://quay.io/repository/external_storage/rbd-provisioner?tab=tags for tags
     ceph_rbd_provisioner:    'quay.io/external_storage/rbd-provisioner:v2.1.1-k8s1.11'
     #
-    fluentbit: docker.io/fluent/fluent-bit:0.12.14
+    fluentbit: docker.io/fluent/fluent-bit:0.12.19
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:3.1.0-mimic-k8s-1.11.3-rev-1'
   local_registry:
