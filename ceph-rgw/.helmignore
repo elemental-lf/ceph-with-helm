@@ -1,0 +1,10 @@
+.git/
+.gitignore
+*.swp
+*.bak
+*.tmp
+*~
+.project
+.idea/
+*.tmproj
+*.iml
