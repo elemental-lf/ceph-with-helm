@@ -68,7 +68,7 @@ rules:
       - services
     resourceNames:
       - kube-dns
-      - core-dns
+      - coredns
     verbs:
       - list
       - get
