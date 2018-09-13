@@ -185,9 +185,6 @@ pod:
           memory: "1024Mi"
           cpu: "2000m"
 
-ceph_client:
-  configmap: ceph-etc
-
 secrets:
   keyrings:
     admin: ceph-client-admin-keyring
