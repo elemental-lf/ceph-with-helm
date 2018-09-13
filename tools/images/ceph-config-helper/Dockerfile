@@ -1,40 +1,14 @@
-FROM docker.io/ubuntu:xenial
-MAINTAINER pete.birley@att.com
+FROM docker.io/ceph/daemon-base:v3.1.0-stable-3.1-mimic-centos-7-x86_64
+MAINTAINER lf@elemental.net
 
-ARG KUBE_VERSION=v1.10.3
-ARG CEPH_RELEASE=luminous
+ARG KUBECTL_VERSION=v1.11.3
 
-ADD https://download.ceph.com/keys/release.asc /etc/apt/ceph-release.asc
-RUN set -ex ;\
-    export DEBIAN_FRONTEND=noninteractive ;\
-    apt-key add /etc/apt/ceph-release.asc ;\
-    rm -f /etc/apt/ceph-release.asc ;\
-    echo deb http://download.ceph.com/debian-${CEPH_RELEASE}/ xenial main | tee /etc/apt/sources.list.d/ceph.list ;\
-    TMP_DIR=$(mktemp --directory) ;\
-    cd ${TMP_DIR} ;\
-    apt-get update ;\
-    apt-get dist-upgrade -y ;\
-    apt-get install --no-install-recommends -y \
-        apt-transport-https \
-        ca-certificates \
-        ceph \
-        curl \
-        gcc \
-        python \
-        python-dev \
-        jq ;\
-    curl -sSL https://bootstrap.pypa.io/get-pip.py | python ;\
+RUN set -ex;\
+    yum install -y jq python2-pip; \
     pip --no-cache-dir install --upgrade \
       crush \
       rgwadmin \
-      six \
-      python-openstackclient \
-      python-swiftclient ;\
-    curl -sSL https://dl.k8s.io/${KUBE_VERSION}/kubernetes-client-linux-amd64.tar.gz | tar -zxv --strip-components=1 ;\
-    mv ${TMP_DIR}/client/bin/kubectl /usr/bin/kubectl ;\
-    chmod +x /usr/bin/kubectl ;\
-    rm -rf ${TMP_DIR} ;\
-    apt-get purge -y --auto-remove \
-        python-dev \
-        gcc ;\
-    rm -rf /var/lib/apt/lists/*
+      six; \
+    curl -sSL -o /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl; \
+    chmod +x /usr/bin/kubectl; \
+    yum clean all
