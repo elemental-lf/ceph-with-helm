@@ -67,8 +67,7 @@ spec:
         {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
       containers:
         - name: create-s3-admin
-          image: {{ .Values.images.tags.rgw_s3_admin }}
-          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll "ceph_config_helper" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.rgw_s3_admin | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
             - name: S3_ADMIN_USERNAME
