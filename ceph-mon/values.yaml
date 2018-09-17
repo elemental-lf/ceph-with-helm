@@ -294,27 +294,9 @@ conf:
       directory: /var/lib/openstack-helm/ceph/mon
     # NOTE(portdirect): for homogeneous clusters the `osd` key can be used to
     # define OSD pods that will be deployed across the cluster.
-    osd:
-      - data:
-          type: directory
-          location: /var/lib/openstack-helm/ceph/osd/osd-one
-        journal:
-          type: directory
-          location: /var/lib/openstack-helm/ceph/osd/journal-one
-        rocksDb:
-          location: ''
-      # - data:
-      #     type: block-logical
-      #     location: /dev/sde
-      #   journal:
-      #     type: block-logical
-      #     location: /dev/sdf
-      # - data:
-      #     type: block-logical
-      #     location: /dev/sdg
-      #   journal:
-      #     type: directory
-      #     location: /var/lib/openstack-helm/ceph/osd/journal-sdg
+    osd: []
+#      - data: dev/sdb
+#        db: ''
 # NOTE(portdirect): for heterogeneous clusters the overrides section can be used to define
 # OSD pods that will be deployed upon specifc nodes.
 # overrides:
@@ -324,12 +306,8 @@ conf:
 #         conf:
 #           storage:
 #             osd:
-#               - data:
-#                   type: directory
-#                   location: /var/lib/openstack-helm/ceph/osd/data-three
-#                 journal:
-#                   type: directory
-#                   location: /var/lib/openstack-helm/ceph/osd/journal-three
+#               - data: /dev/sdb
+#                 db: /dev/sdh6
   pool:
   #NOTE(portdirect): this drives a simple approximation of
   # https://ceph.com/pgcalc/, the `target.osd` key should be set to match the

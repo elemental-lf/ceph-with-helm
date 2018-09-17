@@ -267,47 +267,23 @@ limitations under the License.
 {{- if not $context.Values.__tmpYAML.metadata }}{{- $_ := set $context.Values.__tmpYAML "metadata" dict }}{{- end }}
 {{- $_ := set $context.Values.__tmpYAML.metadata "name" $localDsNodeName }}
 
-{{ $podDataVols := index $context.Values.__daemonset_yaml.spec.template.spec "volumes" }}
-{{- $_ := set $context.Values "__tmpPodVols" $podDataVols }}
-
-  {{ if eq $v.data.type "directory" }}
-    {{ $dataDirVolume := dict "hostPath" (dict "path" $v.data.location) "name" "data" }}
-    {{ $newPodDataVols := append $context.Values.__tmpPodVols $dataDirVolume }}
-    {{- $_ := set $context.Values "__tmpPodVols" $newPodDataVols }}
-  {{ else }}
-    {{ $dataDirVolume := dict "emptyDir" dict "name" "data" }}
-    {{ $newPodDataVols := append $context.Values.__tmpPodVols $dataDirVolume }}
-    {{- $_ := set $context.Values "__tmpPodVols" $newPodDataVols }}
-  {{ end }}
-
-  {{ if eq $v.journal.type "directory" }}
-    {{ $journalDirVolume := dict "hostPath" (dict "path" $v.journal.location) "name" "journal" }}
-    {{ $newPodDataVols := append $context.Values.__tmpPodVols $journalDirVolume }}
-    {{- $_ := set $context.Values "__tmpPodVols" $newPodDataVols }}
-  {{ else }}
-    {{ $dataDirVolume := dict "emptyDir" dict "name" "journal" }}
-    {{ $newPodDataVols := append $context.Values.__tmpPodVols $dataDirVolume }}
-    {{- $_ := set $context.Values "__tmpPodVols" $newPodDataVols }}
-  {{ end }}
-
-  {{- if not $context.Values.__tmpYAML.spec }}{{- $_ := set $context.Values.__tmpYAML "spec" dict }}{{- end }}
-  {{- if not $context.Values.__tmpYAML.spec.template }}{{- $_ := set $context.Values.__tmpYAML.spec "template" dict }}{{- end }}
-  {{- if not $context.Values.__tmpYAML.spec.template.spec }}{{- $_ := set $context.Values.__tmpYAML.spec.template "spec" dict }}{{- end }}
-  {{- $_ := set $context.Values.__tmpYAML.spec.template.spec "volumes" $context.Values.__tmpPodVols }}
-
   {{- if not $context.Values.__tmpYAML.spec }}{{- $_ := set $context.Values.__tmpYAML "spec" dict }}{{- end }}
   {{- if not $context.Values.__tmpYAML.spec.template }}{{- $_ := set $context.Values.__tmpYAML.spec "template" dict }}{{- end }}
   {{- if not $context.Values.__tmpYAML.spec.template.spec }}{{- $_ := set $context.Values.__tmpYAML.spec.template "spec" dict }}{{- end }}
   {{- if not $context.Values.__tmpYAML.spec.template.spec.containers }}{{- $_ := set $context.Values.__tmpYAML.spec.template.spec "containers" list }}{{- end }}
   {{- if not $context.Values.__tmpYAML.spec.template.spec.initContainers }}{{- $_ := set $context.Values.__tmpYAML.spec.template.spec "initContainers" list }}{{- end }}
 
+  {{/* Set volumes */}}
+  {{- $_ := set $context.Values.__tmpYAML.spec.template.spec "volumes" $context.Values.__daemonset_yaml.spec.template.spec.volumes }}
+
+  {{/* Add environment variables to containers */}}
   {{- $_ := set $context.Values "__tmpYAMLcontainers" list }}
   {{- range $podContainer := $context.Values.__daemonset_yaml.spec.template.spec.containers }}
     {{- $_ := set $context.Values "_tmpYAMLcontainer" $podContainer }}
     {{- if empty $context.Values._tmpYAMLcontainer.env }}
     {{- $_ := set $context.Values._tmpYAMLcontainer "env" ( list ) }}
     {{- end }}
-    {{ $containerEnv := prepend (prepend (prepend (prepend (prepend (prepend ( prepend (index $context.Values._tmpYAMLcontainer "env") (dict "name" "STORAGE_TYPE" "value" $v.data.type)) (dict "name" "JOURNAL_TYPE" "value" $v.journal.type)) (dict "name" "STORAGE_LOCATION" "value" $v.data.location)) (dict "name" "JOURNAL_LOCATION" "value" $v.journal.location)) (dict "name" "OSD_FORCE_ZAP" "value" ($v.zap | default false | ternary "1" "0"))) (dict "name" "OSD_BLUESTORE" "value" ($v.bluestore | default false | ternary "1" "0"))) (dict "name" "OSD_ROCKS_DB_LOCATION" "value" ($v.rocksDb.location | default "")) }}
+    {{ $containerEnv := prepend (prepend (prepend (index $context.Values._tmpYAMLcontainer "env") (dict "name" "OSD_DEVICE" "value" $v.data)) (dict "name" "OSD_FORCE_ZAP" "value" ($v.zap | default false | ternary "1" "0"))) (dict "name" "OSD_DB_DEVICE" "value" ($v.db | default "")) }}
     {{- $localInitContainerEnv := omit $context.Values._tmpYAMLcontainer "env" }}
     {{- $_ := set $localInitContainerEnv "env" $containerEnv }}
     {{ $containerList := append $context.Values.__tmpYAMLcontainers $localInitContainerEnv }}
@@ -315,18 +291,17 @@ limitations under the License.
   {{ end }}
   {{- $_ := set $context.Values.__tmpYAML.spec.template.spec "containers" $context.Values.__tmpYAMLcontainers }}
 
+  {{/* Add environment variables to initContainers */}}
   {{- $_ := set $context.Values "__tmpYAMLinitContainers" list }}
   {{- range $podContainer := $context.Values.__daemonset_yaml.spec.template.spec.initContainers }}
     {{- $_ := set $context.Values "_tmpYAMLinitContainer" $podContainer }}
-    {{ $initContainerEnv := prepend (prepend (prepend (prepend (prepend (prepend ( prepend (index $context.Values._tmpYAMLinitContainer "env") (dict "name" "STORAGE_TYPE" "value" $v.data.type)) (dict "name" "JOURNAL_TYPE" "value" $v.journal.type)) (dict "name" "STORAGE_LOCATION" "value" $v.data.location)) (dict "name" "JOURNAL_LOCATION" "value" $v.journal.location)) (dict "name" "OSD_FORCE_ZAP" "value" ($v.zap | default false | ternary "1" "0"))) (dict "name" "OSD_BLUESTORE" "value" ($v.bluestore | default false | ternary "1" "0"))) (dict "name" "OSD_ROCKS_DB_LOCATION" "value" ($v.rocksDb.location | default "")) }}
+    {{ $initContainerEnv := prepend (prepend (prepend (index $context.Values._tmpYAMLinitContainer "env") (dict "name" "OSD_DEVICE" "value" $v.data)) (dict "name" "OSD_FORCE_ZAP" "value" ($v.zap | default false | ternary "1" "0"))) (dict "name" "OSD_DB_DEVICE" "value" ($v.db | default "")) }}
     {{- $localInitContainerEnv := omit $context.Values._tmpYAMLinitContainer "env" }}
     {{- $_ := set $localInitContainerEnv "env" $initContainerEnv }}
     {{ $initContainerList := append $context.Values.__tmpYAMLinitContainers $localInitContainerEnv }}
     {{ $_ := set $context.Values "__tmpYAMLinitContainers" $initContainerList }}
   {{ end }}
   {{- $_ := set $context.Values.__tmpYAML.spec.template.spec "initContainers" $context.Values.__tmpYAMLinitContainers }}
-
-  {{- $_ := set $context.Values.__tmpYAML.spec.template.spec "volumes" $context.Values.__tmpPodVols }}
 
 {{ merge $context.Values.__tmpYAML $context.Values.__daemonset_yaml | toYaml }}
 

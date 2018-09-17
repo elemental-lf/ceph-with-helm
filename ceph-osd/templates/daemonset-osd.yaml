@@ -52,19 +52,11 @@ spec:
           env:
           # NOTE(portdirect): These environment variables will be populated
           # dynamicly at the point of render.
-          # - name: JOURNAL_LOCATION
-          #   value: /var/lib/openstack-helm/ceph/osd/journal-one
-          # - name: STORAGE_LOCATION
-          #   value: /var/lib/openstack-helm/ceph/osd/data-one
-          # - name: JOURNAL_TYPE
-          #   value: directory
-          # - name: STORAGE_TYPE
-          #   value: directory
-          # - name: OSD_BLUESTORE
-          #   value: false
+          # - name: OSD_DEVICE
+          #   value: /dev/sdb
           # - name: OSD_FORCE_ZAP
           #   value: false
-          # - name: OSD_ROCK_DB_LOCATION:
+          # - name: OSD_DB_DEVICE:
           #   value: empty string
             - name: CLUSTER
               value: "ceph"
@@ -88,24 +80,14 @@ spec:
           # NOTE(portdirect): These environment variables will be populated
           # dynamicly at the point of render and added to all containers in the
           # pod
-          # - name: JOURNAL_LOCATION
-          #   value: /var/lib/openstack-helm/ceph/osd/journal-one
-          # - name: STORAGE_LOCATION
-          #   value: /var/lib/openstack-helm/ceph/osd/data-one
-          # - name: JOURNAL_TYPE
-          #   value: directory
-          # - name: STORAGE_TYPE
-          #   value: directory
-          # - name: OSD_BLUESTORE
-          #   value: false
+          # - name: OSD_DEVICE
+          #   value: /dev/sdb
           # - name: OSD_FORCE_ZAP
           #   value: false
-          # - name: OSD_ROCK_DB_LOCATION:
+          # - name: OSD_DB_DEVICE:
           #   value: empty string
             - name: CLUSTER
               value: "ceph"
-            - name: CEPH_GET_ADMIN_KEY
-              value: "1"
           command:
             - /tmp/osd-init.sh
           volumeMounts:
@@ -133,12 +115,10 @@ spec:
             - name: run-lvm
               mountPath: /run/lvm
               readOnly: false
-            - name: data
-              mountPath: /var/lib/ceph/osd
-              readOnly: false
-            - name: journal
-              mountPath: /var/lib/ceph/journal
-              readOnly: false
+            - name: ceph-osd-bin
+              mountPath: /etc/lvm/lvmlocal.conf
+              subPath: lvmlocal.conf
+              readOnly: true
       containers:
         - name: osd-pod
 {{ tuple $envAll "ceph_osd" | include "helm-toolkit.snippets.image" | indent 10 }}
@@ -148,24 +128,14 @@ spec:
           env:
           # NOTE(portdirect): These environment variables will be populated
           # dynamicly at the point of render.
-          # - name: JOURNAL_LOCATION
-          #   value: /var/lib/openstack-helm/ceph/osd/journal-one
-          # - name: STORAGE_LOCATION
-          #   value: /var/lib/openstack-helm/ceph/osd/data-one
-          # - name: JOURNAL_TYPE
-          #   value: directory
-          # - name: STORAGE_TYPE
-          #   value: directory
-          # - name: OSD_BLUESTORE
-          #   value: false
+          # - name: OSD_DEVICE
+          #   value: /dev/sdb
           # - name: OSD_FORCE_ZAP
           #   value: false
-          # - name: OSD_ROCK_DB_LOCATION:
+          # - name: OSD_DB_DEVICE:
           #   value: empty string
             - name: CLUSTER
               value: "ceph"
-            - name: CEPH_GET_ADMIN_KEY
-              value: "1"
           command:
             - /tmp/osd-start.sh
           lifecycle:
@@ -191,14 +161,6 @@ spec:
             - name: ceph-osd-bin
               mountPath: /tmp/osd-start.sh
               subPath: osd-start.sh
-              readOnly: true
-            - name: ceph-osd-bin
-              mountPath: /tmp/osd-directory.sh
-              subPath: osd-directory.sh
-              readOnly: true
-            - name: ceph-osd-bin
-              mountPath: /tmp/osd-block.sh
-              subPath: osd-block.sh
               readOnly: true
             - name: ceph-osd-bin
               mountPath: /tmp/osd-check.sh
@@ -228,14 +190,12 @@ spec:
             - name: run-lvm
               mountPath: /run/lvm
               readOnly: false
-            - name: data
-              mountPath: /var/lib/ceph/osd
-              readOnly: false
-            - name: journal
-              mountPath: /var/lib/ceph/journal
-              readOnly: false
             - name: varlog
               mountPath: /var/log/ceph
+            - name: ceph-osd-bin
+              mountPath: /etc/lvm/lvmlocal.conf
+              subPath: lvmlocal.conf
+              readOnly: true
         {{ if .Values.logging.fluentd }}
         - name: fluentbit-sidecar
 {{ tuple $envAll "fluentbit" | include "helm-toolkit.snippets.image" | indent 10 }}
@@ -283,14 +243,6 @@ spec:
         - name: ceph-bootstrap-osd-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.osd }}
-      # NOTE(portdirect): If directory mounts are to be used for OSD's
-      # they will automaticly be inserted here, with the format:
-      # - name: data
-      #   hostPath:
-      #     path: /var/lib/foo
-      # - name: journal
-      #   hostPath:
-      #     path: /var/lib/bar
 
 {{- end }}
 {{- end }}
