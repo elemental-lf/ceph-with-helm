@@ -25,11 +25,6 @@ data:
   osd-start.sh: |
 {{ tuple "bin/osd/_start.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
 
-  osd-directory.sh: |
-{{ tuple "bin/osd/_directory.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
-  osd-block.sh: |
-{{ tuple "bin/osd/_block.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
-
   osd-init.sh: |
 {{ tuple "bin/osd/_init.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
 
@@ -46,4 +41,14 @@ data:
   fluentbit-sidecar.sh: |
 {{ tuple "bin/osd/_fluentbit-sidecar.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 {{ end }}
+
+  lvmlocal.conf: |
+    global {
+      use_lvmetad = 0
+    }
+    backup {
+      backup = 0
+      archive = 0
+    }
+
 {{- end }}

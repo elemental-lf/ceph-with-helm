@@ -18,15 +18,14 @@ limitations under the License.
 
 set -ex
 
-if [ "x${STORAGE_TYPE%-*}" == "xblock" ]; then
-  OSD_DEVICE=$(readlink -f ${STORAGE_LOCATION})
-  OSD_JOURNAL=$(readlink -f ${JOURNAL_LOCATION})
-  if [ "x${STORAGE_TYPE#*-}" == "xlogical" ]; then
-    CEPH_OSD_PID="$(cat /run/ceph-osd.pid)"
-    while kill -0 ${CEPH_OSD_PID} >/dev/null 2>&1; do
-        kill -SIGTERM ${CEPH_OSD_PID}
-        sleep 1
-    done
-    umount "$(findmnt -S "${OSD_DEVICE}1" | tail -n +2 | awk '{ print $1 }')"
-  fi
-fi
+: "${OSD_PATH_BASE:=/var/lib/ceph/osd/${CLUSTER}}"
+
+OSD_PID="$(cat /run/ceph-osd.pid)"
+OSD_ID="$(cat /run/ceph-osd.id)"
+OSD_PATH="${OSD_PATH_BASE}-${OSD_ID}"
+
+while kill -0 ${OSD_PID} >/dev/null 2>&1; do
+  kill -SIGTERM ${OSD_PID}
+  sleep 1
+done
+umount "${OSD_PATH}"
