@@ -18,8 +18,6 @@ limitations under the License.
 
 set -ex
 
-hostname
-
 : "${OSD_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-osd/${CLUSTER}.keyring}"
 : "${OSD_FORCE_ZAP:=0}"
 
@@ -27,9 +25,9 @@ function extract_cluster_fsid {
   python -c 'import json; import sys; input = json.load(sys.stdin); print(input[input.keys()[0]][0]["tags"]["ceph.cluster_fsid"]);'
 }
 
-OSD_DEVICE="$(readlink -f ${STORAGE_LOCATION})"
-if [ -n "${OSD_ROCKS_DB_LOCATION}" ]; then
-  OSD_ROCKS_DB_LOCATION="$(readlink -f ${OSD_ROCKS_DB_LOCATION})"
+OSD_DEVICE="$(readlink -f ${OSD_DEVICE})"
+if [ -n "${OSD_DB_DEVICE}" ]; then
+  OSD_DB_DEVICE="$(readlink -f ${OSD_DB_DEVICE})"
 fi
 
 if [ -z "${OSD_DEVICE}" ];then
@@ -71,8 +69,8 @@ else
   echo "Device ${OSD_DEVICE} will be prepared now."
 fi
   
-if [ -n "$OSD_ROCKS_DB_LOCATION" ]; then
-  CLI_OPTS="${CLI_OPTS} --block.db ${OSD_ROCKS_DB_LOCATION}"
+if [ -n "$OSD_DB_DEVICE" ]; then
+  CLI_OPTS="${CLI_OPTS} --block.db ${OSD_DB_DEVICE}"
 fi
 
 ceph-volume lvm prepare --bluestore --no-systemd ${CLI_OPTS} --data "${OSD_DEVICE}"
