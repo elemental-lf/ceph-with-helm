@@ -22,7 +22,7 @@ set -ex
 : "${CRUSH_LOCATION:=root=default host=${HOSTNAME}}"
 : "${OSD_PATH_BASE:=/var/lib/ceph/osd/${CLUSTER}}"
 
-OSD_DEVICE="$(readlink -f ${OSD_DEVICE})"
+OSD_DEVICE="$(readlink -e ${OSD_DEVICE})"
 
 function extract_osd_id {
   python -c 'import json; import sys; input = json.load(sys.stdin); print(input[input.keys()[0]][0]["tags"]["ceph.osd_id"]);'

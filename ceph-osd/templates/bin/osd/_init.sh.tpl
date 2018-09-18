@@ -25,19 +25,37 @@ function extract_cluster_fsid {
   python -c 'import json; import sys; input = json.load(sys.stdin); print(input[input.keys()[0]][0]["tags"]["ceph.cluster_fsid"]);'
 }
 
-OSD_DEVICE="$(readlink -f ${OSD_DEVICE})"
-if [ -n "${OSD_DB_DEVICE}" ]; then
-  OSD_DB_DEVICE="$(readlink -f ${OSD_DB_DEVICE})"
+# Make sure all device files are there
+udevadm trigger
+udevadm settle --timeout=600
+
+if [ -z "${OSD_DEVICE}" ]; then
+  echo "ERROR- You must provide a device to build your OSD in OSD_DEVICE."
+  exit 1
 fi
 
-if [ -z "${OSD_DEVICE}" ];then
-  echo "ERROR- You must provide a device to build your OSD ie: /dev/sdb"
+OSD_DEVICE="$(readlink -e ${OSD_DEVICE})"
+if [ -z "${OSD_DEVICE}" ]; then
+  echo "ERROR- The device pointed to by OSD_DEVICE doesn't exist."
   exit 1
 fi
 
 if [ ! -b "${OSD_DEVICE}" ]; then
-  echo "ERROR- The device pointed by OSD_DEVICE ($OSD_DEVICE) doesn't exist!"
+  echo "ERROR- The device pointed to by OSD_DEVICE ($OSD_DEVICE) isn't a block device."
   exit 1
+fi
+
+if [ -n "${OSD_DB_DEVICE}" ]; then
+  OSD_DB_DEVICE="$(readlink -e ${OSD_DB_DEVICE})"
+  if [ -z "${OSD_DB_DEVICE}" ]; then
+    echo "ERROR- The device pointed to by OSD_DB_DEVICE doesn't exist."
+    exit 1
+  fi
+
+  if [ ! -b "${OSD_DB_DEVICE}" ]; then
+    echo "ERROR- The device pointed by OSD_DB_DEVICE ($OSD_DB_DEVICE) isn't a block device."
+    exit 1
+  fi
 fi
 
 if [ ! -e "$OSD_BOOTSTRAP_KEYRING" ]; then
@@ -75,5 +93,4 @@ fi
 
 ceph-volume lvm prepare --bluestore --no-systemd ${CLI_OPTS} --data "${OSD_DEVICE}"
 
-# watch the udev event queue, and exit if all current events are handled
 udevadm settle --timeout=600
