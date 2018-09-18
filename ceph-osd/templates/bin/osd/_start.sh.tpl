@@ -55,7 +55,7 @@ fi
 udevadm settle --timeout=600
 
 CEPH_VOLUME_LVM_LIST="$(ceph-volume lvm list --format json "${OSD_DEVICE}")"
-if [ -z "${CEPH_VOLUME_LVM_LIST}" ]; then
+if [[ -z ${CEPH_VOLUME_LVM_LIST} || ${CEPH_VOLUME_LVM_LIST} == "{}" ]]; then
   echo "ERROR- The device $OSD_DEVICE doesn't look like an OSD device."
   exit 1
 fi
