@@ -80,6 +80,16 @@ rules:
       - cephfs-provisioner
     verbs:
       - use
+  - apiGroups:
+      - ''
+    resources:
+      - services
+    resourceNames:
+      - kube-dns
+      - coredns
+    verbs:
+      - list
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
