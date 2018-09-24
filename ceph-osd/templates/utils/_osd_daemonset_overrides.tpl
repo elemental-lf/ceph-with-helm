@@ -34,7 +34,6 @@ limitations under the License.
   {{- $_ := set $context.Values "__daemonset_yaml" $daemonset_yaml }}
   {{- $daemonset_root_name := printf "ceph_%s" $daemonset }}
   {{- $_ := set $context.Values "__daemonset_list" list }}
-  {{- $_ := set $context.Values "__default" dict }}
   {{- if hasKey $context.Values.conf "overrides" }}
     {{- range $key, $val := $context.Values.conf.overrides }}
 
@@ -145,59 +144,8 @@ limitations under the License.
             {{- end }}
           {{- end }}
         {{- end }}
-
-        {{/* scheduler exceptions for the default daemonset */}}
-        {{- $_ := set $context.Values.__default "matchExpressions" list }}
-
-        {{- range $type, $type_data := . }}
-          {{/* Do not schedule to other specified labels */}}
-          {{- if eq $type "labels" }}
-            {{- range $label_data := . }}
-              {{- $default_dict := omit $label_data.label "NULL" }}
-
-              {{- $_ := set $default_dict "operator" "NotIn" }}
-
-              {{- $list_aggregate := append $context.Values.__default.matchExpressions $default_dict }}
-              {{- $_ := set $context.Values.__default "matchExpressions" $list_aggregate }}
-            {{- end }}
-          {{- end }}
-          {{/* Do not schedule to other specified hosts */}}
-          {{- if eq $type "hosts" }}
-            {{- range $host_data := . }}
-              {{- $default_dict := dict }}
-
-              {{- $_ := set $default_dict "key" "kubernetes.io/hostname" }}
-              {{- $_ := set $default_dict "operator" "NotIn" }}
-
-              {{- $values_list := list $host_data.name }}
-              {{- $_ := set $default_dict "values" $values_list }}
-
-              {{- $list_aggregate := append $context.Values.__default.matchExpressions $default_dict }}
-              {{- $_ := set $context.Values.__default "matchExpressions" $list_aggregate }}
-            {{- end }}
-          {{- end }}
-        {{- end }}
       {{- end }}
     {{- end }}
-  {{- end }}
-
-  {{/* generate the default daemonset */}}
-  {{/* if default storage configuration is empty, don't output a default daemonset at all */}}
-  {{- if $context.Values.conf.storage.osd }}
-    {{/* set name */}}
-    {{- $_ := set $context.Values.__default "name" "default" }}
-
-    {{/* no overrides apply, so copy as-is */}}
-    {{- $root_conf_copy1 := omit $context.Values.conf "overrides" }}
-    {{- $root_conf_copy2 := dict "conf" $root_conf_copy1 }}
-    {{- $context_values := omit $context.Values "conf" }}
-    {{- $root_conf_copy3 := merge $context_values $root_conf_copy2 }}
-    {{- $root_conf_copy4 := dict "Values" $root_conf_copy3 }}
-    {{- $_ := set $context.Values.__default "nodeData" $root_conf_copy4 }}
-
-    {{/* add to global list */}}
-    {{- $list_aggregate := append $context.Values.__daemonset_list $context.Values.__default }}
-    {{- $_ := set $context.Values "__daemonset_list" $list_aggregate }}
   {{- end }}
 
   {{- range $current_dict := $context.Values.__daemonset_list }}
