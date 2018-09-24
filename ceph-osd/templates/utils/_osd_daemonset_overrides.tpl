@@ -25,19 +25,16 @@ limitations under the License.
   {{- $_ := unset $context.Values "__match_exprs_hash_content" }}
 {{- end }}
 
-{{- define "ceph.utils.osd_daemonset_overrides" }}
-  {{- $daemonset := index . 0 }}
-  {{- $daemonset_yaml := index . 1 }}
-  {{- $configmap_name := index . 2 }}
-  {{- $context := index . 3 }}
-  {{- $_ := unset $context ".Files" }}
+{{- define "ceph.utils.osd_daemonset_list" }}
+  {{- $daemonset_yaml := index . 0 }}
+  {{- $configmap_name := index . 1 }}
+  {{- $context := index . 2 }}
   {{- $_ := set $context.Values "__daemonset_yaml" $daemonset_yaml }}
-  {{- $daemonset_root_name := printf "ceph_%s" $daemonset }}
   {{- $_ := set $context.Values "__daemonset_list" list }}
   {{- if hasKey $context.Values.conf "overrides" }}
     {{- range $key, $val := $context.Values.conf.overrides }}
 
-      {{- if eq $key $daemonset_root_name }}
+      {{- if eq $key "ceph_osd" }}
         {{- range $type, $type_data := . }}
 
           {{- if eq $type "hosts" }}
@@ -155,7 +152,7 @@ limitations under the License.
     {{- $_ := set $current_dict "nodeData" $merged_dict }}
 
     {{/* name needs to be a DNS-1123 compliant name. Ensure lower case */}}
-    {{- $name_format1 := printf (print $daemonset_root_name "-" $current_dict.name) | lower }}
+    {{- $name_format1 := printf (print "ceph-osd-" $current_dict.name) | lower }}
     {{/* labels may contain underscores which would be invalid here, so we replace them with dashes
     there may be other valid label names which would make for an invalid DNS-1123 name
     but these will be easier to handle in future with sprig regex* functions
