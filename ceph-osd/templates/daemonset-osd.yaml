@@ -251,5 +251,5 @@ spec:
 {{- $serviceAccountName := "ceph-osd"}}
 {{ tuple . "osd" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 {{- $daemonset_yaml := list $configMapName $serviceAccountName . | include "ceph.osd.daemonset" | toString }}
-{{- list $daemonset_yaml . | include "ceph.utils.osd_daemonset_list" }}
+{{- list $daemonset_yaml . | include "ceph.utils.osd_daemonset_generator" }}
 {{- end }}

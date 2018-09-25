@@ -20,7 +20,7 @@ limitations under the License.
   {{- (printf "ceph-osd-%s-%s" (regexReplaceAllLiteral "\\..+$" $host "" | lower) (regexReplaceAllLiteral "[^a-zA-Z0-9]" (regexReplaceAllLiteral "^.*/" $osd "") "-")) | trunc 63 }}
 {{- end }}
 
-{{- define "ceph.utils.osd_daemonset_list" }}
+{{- define "ceph.utils.osd_daemonset_generator" }}
   {{- $daemonset_yaml := index . 0 }}
   {{- $context := index . 1 }}
 
