@@ -21,11 +21,12 @@ set -ex
 : "${OSD_PATH_BASE:=/var/lib/ceph/osd/${CLUSTER}}"
 
 OSD_PID="$(cat /run/ceph-osd.pid)"
-OSD_ID="$(cat /run/ceph-osd.id)"
-OSD_PATH="${OSD_PATH_BASE}-${OSD_ID}"
 
-while kill -0 ${OSD_PID} >/dev/null 2>&1; do
-  kill -SIGTERM ${OSD_PID}
+while pkill -0 -P ${OSD_PID} >/dev/null 2>&1; do
+  # ceph-osd is wrapped in /usr/bin/flock.  pkill -P kills the child
+  # (ceph-osd) and flock follows suit.
+  pkill -SIGTERM -P ${OSD_PID}
   sleep 1
 done
-umount "${OSD_PATH}"
+# We used to umount here, but the mount is cleanup up when the container
+# exits anyway.

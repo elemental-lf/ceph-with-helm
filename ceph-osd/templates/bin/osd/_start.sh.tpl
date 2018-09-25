@@ -70,8 +70,6 @@ if [ -z "${LVM2_VG_NAME}" ]; then
   exit 1
 fi
 
-echo "$OSD_ID" >/run/ceph-osd.id
-
 lvchange -ay "${LVM2_VG_NAME}/${OSD_LV_NAME}"
 udevadm settle --timeout=600
 ceph-volume lvm activate --bluestore --no-systemd "${OSD_ID}" "${OSD_FSID}"
@@ -88,7 +86,13 @@ ceph \
   crush \
   create-or-move -- "${OSD_ID}" "${OSD_WEIGHT}" ${CRUSH_LOCATION}
 
-exec /usr/bin/ceph-osd \
+# The flock prevents two ceph-osd processes from accessing the same
+# OSD device. This may happen when pods are updated and the old and
+# new version exist simultaneously.
+# The recorded PID is actually the PID of the flock process.
+exec flock --exclusive --timeout 15 \
+    "/dev/${LVM2_VG_NAME}/${OSD_LV_NAME}" \
+    ceph-osd \
     --cluster "${CLUSTER}" \
     -f \
     -i "${OSD_ID}" \
