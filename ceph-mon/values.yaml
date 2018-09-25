@@ -292,22 +292,18 @@ conf:
   storage:
     mon:
       directory: /var/lib/openstack-helm/ceph/mon
-    # NOTE(portdirect): for homogeneous clusters the `osd` key can be used to
-    # define OSD pods that will be deployed across the cluster.
     osd: []
-#      - data: dev/sdb
-#        db: ''
-# NOTE(portdirect): for heterogeneous clusters the overrides section can be used to define
-# OSD pods that will be deployed upon specifc nodes.
-# overrides:
-#   ceph_osd:
-#     hosts:
-#       - name: host1.fqdn
-#         conf:
-#           storage:
-#             osd:
-#               - data: /dev/sdb
-#                 db: /dev/sdh6
+#      - hosts: 
+#          - cephosd041.example.com
+#          - cephosd042.example.com
+#          - cephosd043.example.com
+#        osds: 
+#          - data: '/dev/sdb'
+#            db: '/dev/sdh1'
+#            zap: false
+#          - data: '/dev/sdc'
+#            db: '/dev/sdh2'
+#            zap: false
   pool:
   #NOTE(portdirect): this drives a simple approximation of
   # https://ceph.com/pgcalc/, the `target.osd` key should be set to match the
