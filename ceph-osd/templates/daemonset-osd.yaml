@@ -142,6 +142,7 @@ spec:
               exec:
                 command:
                   - /tmp/osd-stop.sh
+          terminationGracePeriodSeconds: 300
           livenessProbe:
            exec:
             command:
