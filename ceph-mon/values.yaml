@@ -58,6 +58,9 @@ labels:
   osd:
     node_selector_key: ceph-osd
     node_selector_value: enabled
+  osd_maint:
+    node_selector_key: ceph-osd-maint
+    node_selector_value: enabled
   provisioner:
     node_selector_key: openstack-control-plane
     node_selector_value: enabled
@@ -114,6 +117,13 @@ pod:
         memory: "50Mi"
         cpu: "500m"
     osd:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1024Mi"
+        cpu: "1000m"
+    osd_maint:
       requests:
         memory: "512Mi"
         cpu: "500m"
@@ -683,6 +693,7 @@ manifests:
   # ceph-osd
   configmap_osd_bin: true
   daemonset_osd: true
+  daemonset_osd_maint: true
   # ceph-client
   configmap_client_bin: true
   deployment_mds: true
