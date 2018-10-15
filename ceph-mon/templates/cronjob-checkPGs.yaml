@@ -47,6 +47,15 @@ spec:
                     fieldPath: metadata.namespace
             command:
               - /tmp/utils-checkPGs.sh
+            volumeMounts:
+              - name: ceph-mon-bin
+                mountPath: /tmp/utils-checkPGs.sh
+                subPath: utils-checkPGs.sh
+                readOnly: true
           restartPolicy: Never
-
+          volumes:
+          - name: ceph-mon-bin
+            configMap:
+              name: ceph-mon-bin
+              defaultMode: 0555
 {{- end }}
