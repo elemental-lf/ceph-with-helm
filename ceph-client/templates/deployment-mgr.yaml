@@ -37,6 +37,8 @@ spec:
     metadata:
       labels:
 {{ tuple $envAll "ceph" "mgr" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+        configmap-bin-hash: {{ tuple "configmap-bin.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       affinity:
