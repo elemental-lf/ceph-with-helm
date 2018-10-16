@@ -17,6 +17,8 @@ limitations under the License.
 {{- if and .Values.manifests.job_cephfs_client_key .Values.deployment.cephfs_provisioner }}
 {{- $envAll := . }}
 
+{{- $nsStringSuffix := $envAll.Release.Namespace | sha256sum | trunc 8 }}
+
 {{- $serviceAccountName := "ceph-cephfs-client-key-generator" }}
 {{ tuple $envAll "cephfs_client_key_generator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
@@ -51,7 +53,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
-  name: {{ printf "%s-%s" $serviceAccountName $envAll.Release.Namespace }}
+  name: {{ printf "%s-%s" $serviceAccountName $nsStringSuffix }}
   namespace: {{ .Values.storageclass.rbd.admin_secret_namespace }}
 rules:
   - apiGroups:
@@ -65,12 +67,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
-  name: {{ printf "%s-%s" $serviceAccountName $envAll.Release.Namespace }}
+  name: {{ printf "%s-%s" $serviceAccountName $nsStringSuffix }}
   namespace: {{ .Values.storageclass.rbd.admin_secret_namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ printf "%s-%s" $serviceAccountName $envAll.Release.Namespace }}
+  name: {{ printf "%s-%s" $serviceAccountName $nsStringSuffix }}
 subjects:
   - kind: ServiceAccount
     name: {{ $serviceAccountName }}
