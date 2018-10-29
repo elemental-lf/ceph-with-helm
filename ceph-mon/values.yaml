@@ -208,7 +208,7 @@ secrets:
     admin: radosgw-s3-admin-creds
   # ceph-rgw
   tls:
-    object_store:
+    ceph_object_store:
       api:
         public: ceph-tls-public
 
@@ -607,31 +607,8 @@ endpoints:
         default: 9283
     scheme:
       default: http
-  object_store:
-    name: swift
-    namespace: null
-    hosts:
-      default: ceph-rgw
-      public: radosgw
-    host_fqdn_override:
-      default: null
-      # NOTE(portdirect): this chart supports TLS for fqdn over-ridden public
-      # endpoints using the following format:
-      # public:
-      #   host: null
-      #   tls:
-      #     crt: null
-      #     key: null
-    path:
-      default: /swift/v1/KEY_$(tenant_id)s
-    scheme:
-      default: http
-    port:
-      api:
-        default: 8088
-        public: 80      
   ceph_object_store:
-    name: radosgw
+    name: ceph-rgw
     namespace: null
     auth:
       admin:
@@ -642,9 +619,16 @@ endpoints:
         secret_key: "22S9iCLHcHId9AzAQD32O8jrq7DpFX9RHIOOC4NL"
     hosts:
       default: ceph-rgw
-      public: radosgw
+      public: ceph-rgw
     host_fqdn_override:
       default: null
+      # NOTE(portdirect): this chart supports TLS for fqdn over-ridden public
+      # endpoints using the following format:
+      # public:
+      #   host: null
+      #   tls:
+      #     crt: null
+      #     key: null
     path:
       default: null
     scheme:

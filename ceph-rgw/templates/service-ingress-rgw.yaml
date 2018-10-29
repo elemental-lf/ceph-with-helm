@@ -15,6 +15,6 @@ limitations under the License.
 */}}
 
 {{- if and .Values.manifests.service_ingress_rgw ( and .Values.deployment.ceph (and .Values.network.api.ingress.public .Values.conf.features.rgw ) ) }}
-{{- $serviceIngressOpts := dict "envAll" . "backendServiceType" "object_store" -}}
+{{- $serviceIngressOpts := dict "envAll" . "backendServiceType" "ceph_object_store" -}}
 {{ $serviceIngressOpts | include "helm-toolkit.manifests.service_ingress" }}
 {{- end }}

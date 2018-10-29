@@ -71,21 +71,21 @@ spec:
             - name: CLUSTER
               value: "ceph"
             - name: RGW_CIVETWEB_PORT
-              value: "{{ tuple "object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}"
+              value: "{{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}"
           command:
             - /tmp/rgw-start.sh
           ports:
-            - containerPort: {{ tuple "object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+            - containerPort: {{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
           livenessProbe:
               httpGet:
                 path: /
-                port: {{ tuple "object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+                port: {{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
               initialDelaySeconds: 120
               timeoutSeconds: 5
           readinessProbe:
               httpGet:
                 path: /
-                port: {{ tuple "object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+                port: {{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
               timeoutSeconds: 5
           volumeMounts:
             - name: ceph-rgw-bin
