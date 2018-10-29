@@ -73,9 +73,6 @@ releasenotes/build
 logs/
 tmp/
 
-# Developer symlinks
-helm-toolkit
-
 # All values.yaml except ceph-mon
 */values.yaml
 !ceph-mon/values.yaml
