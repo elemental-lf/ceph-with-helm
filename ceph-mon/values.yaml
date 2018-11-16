@@ -44,6 +44,7 @@ images:
     fluentbit: docker.io/fluent/fluent-bit:0.12.19
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:3.1.0-mimic-k8s-1.11.3-rev-1'
+    ceph_osd_operator: 'docker.io/elementalnet/ceph-osd-operator:latest'
   local_registry:
     active: false
     exclude: []
@@ -57,6 +58,9 @@ labels:
     node_selector_value: enabled
   osd:
     node_selector_key: ceph-osd
+    node_selector_value: enabled
+  osd_operator:
+    node_selector_key: openstack-control-plane
     node_selector_value: enabled
   osd_maint:
     node_selector_key: ceph-osd-maint
@@ -676,7 +680,8 @@ manifests:
   cronjob_checkPGs: true
   # ceph-osd
   configmap_osd_bin: true
-  daemonset_osd: true
+  deployment_osd_operator: true
+  cr_osds: true
   daemonset_osd_maint: true
   # ceph-client
   configmap_client_bin: true

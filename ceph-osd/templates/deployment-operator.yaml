@@ -1,0 +1,75 @@
+{{- if .Values.manifests.deployment_osd_operator }}
+{{- $envAll := . }}
+{{- $serviceAccountName := "ceph-osd-operator"}}
+{{ tuple . "osd-operator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $serviceAccountName }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - "*"
+- apiGroups:
+  - ceph.elemental.net
+  resources:
+  - '*'
+  verbs:
+  - watch
+  - get
+  - list
+  - update
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ $serviceAccountName }}
+subjects:
+- kind: ServiceAccount
+  name: {{ $serviceAccountName }}
+roleRef:
+  kind: Role
+  name: {{ $serviceAccountName }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ceph-osd-operator
+  labels:
+{{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+{{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      nodeSelector:
+        {{ .Values.labels.osd_operator.node_selector_key }}: {{ .Values.labels.osd_operator.node_selector_value }}
+      dnsPolicy: {{ .Values.pod.dns_policy }}
+      initContainers:
+{{ tuple $envAll "osd-maint" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: ceph-osd-operator
+{{ tuple $envAll "ceph_osd_operator" | include "helm-toolkit.snippets.image" | indent 10 }}
+{{ tuple $envAll $envAll.Values.pod.resources.osd_operator | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          ports:
+          - containerPort: 60000
+            name: metrics
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "ceph-osd-operator"
+{{- end }}

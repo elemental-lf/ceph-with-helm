@@ -1,38 +1,26 @@
-{{/*
-Copyright 2017 The Openstack-Helm Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/}}
-
-
-{{- define "ceph.osd.daemonset" }}
-{{- $configMapName := index . 0 }}
-{{- $serviceAccountName := index . 1 }}
-{{- $envAll := index . 2 }}
-{{- with $envAll }}
+{{- if .Values.manifests.cr_osds }}
+{{- $envAll := . }}
+{{- $serviceAccountName := "ceph-osd"}}
+{{ tuple . "osd" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
-kind: DaemonSet
-apiVersion: apps/v1
+apiVersion: scheduling.k8s.io/v1beta1
+kind: PriorityClass
 metadata:
-  name: ceph-osd
-  labels:
-{{ tuple $envAll "ceph" "osd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+  name: {{ $serviceAccountName }}
+  value: 1000000000
+---
+apiVersion: ceph.elemental.net/v1alpha1
+kind: CephOSD
+metadata:
+  name: ceph-osds
 spec:
-  selector:
-    matchLabels:
-{{ tuple $envAll "ceph" "osd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
-  template:
+  storage:
+{{ toYaml .Values.conf.storage.osd | indent 2 }}
+  podTemplate:
+    kind: Pod
+    apiVersion: apps/v1
     metadata:
+      name: ceph-osd
       labels:
 {{ tuple $envAll "ceph" "osd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
@@ -42,6 +30,7 @@ spec:
       hostNetwork: true
       hostPID: true
       dnsPolicy: {{ .Values.pod.dns_policy }}
+      priorityClassName: {{ $serviceAccountName }}
       initContainers:
 {{ tuple $envAll "osd" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
         - name: ceph-init-dirs
@@ -125,13 +114,11 @@ spec:
           securityContext:
             privileged: true
           env:
-          # NOTE(portdirect): These environment variables will be populated
-          # dynamicly at the point of render.
           # - name: OSD_DEVICE
           #   value: /dev/sdb
-          # - name: OSD_FORCE_ZAP
-          #   value: false
-          # - name: OSD_DB_DEVICE:
+          # - name: OSD_DB_DEVICE
+          #   value: empty string
+          # - name: OSD_WAL_DEVICE
           #   value: empty string
             - name: CLUSTER
               value: "ceph"
@@ -238,19 +225,9 @@ spec:
             defaultMode: 0555
         - name: ceph-etc
           configMap:
-            name: {{ $configMapName }}
+            name: ceph-etc
             defaultMode: 0444
         - name: ceph-bootstrap-osd-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.osd }}
-
-{{- end }}
-{{- end }}
-
-{{- if .Values.manifests.daemonset_osd }}
-{{- $configMapName := "ceph-etc" }}
-{{- $serviceAccountName := "ceph-osd"}}
-{{ tuple . "osd" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
-{{- $daemonset_yaml := list $configMapName $serviceAccountName . | include "ceph.osd.daemonset" | toString }}
-{{- list $daemonset_yaml . | include "ceph.utils.osd_daemonset_generator" }}
 {{- end }}
