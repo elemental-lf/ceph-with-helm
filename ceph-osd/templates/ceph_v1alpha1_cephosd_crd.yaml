@@ -4476,7 +4476,10 @@ spec:
                 required: [hosts, osds]
                 type: object
               type: array
-          required: [storage, podTemplate]
+            upgradeDomain:
+              enum: [OSD, Host]
+              type: string
+          required: [storage, upgradeDomain, podTemplate]
   version: v1alpha1
   versions:
   - {name: v1alpha1, served: true, storage: true}
