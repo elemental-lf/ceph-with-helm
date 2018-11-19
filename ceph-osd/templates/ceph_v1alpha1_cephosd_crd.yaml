@@ -1,6 +1,8 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
-metadata: {name: cephosd.ceph.elemental.net}
+metadata:
+  annotations: {helm.sh/hook: crd-install}
+  name: cephosd.ceph.elemental.net
 spec:
   group: ceph.elemental.net
   names: {kind: CephOSD, listKind: CephOSDList, plural: cephosd, singular: cephosd}
