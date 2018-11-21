@@ -16,7 +16,7 @@ metadata:
 spec:
   storage:
 {{ toYaml .Values.conf.storage.osd | indent 2 }}
-  upgradeDomain: Host
+  updateDomain: Host
   podTemplate:
     kind: Pod
     apiVersion: apps/v1
