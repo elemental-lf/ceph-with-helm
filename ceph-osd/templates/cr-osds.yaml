@@ -231,4 +231,8 @@ spec:
         - name: ceph-bootstrap-osd-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.osd }}
+      tolerations:
+        - key: node.kubernetes.io/unschedulable
+          operator: Exists
+          effect: NoSchedule
 {{- end }}
