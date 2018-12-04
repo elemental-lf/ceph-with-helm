@@ -28,5 +28,6 @@ while pkill -0 -P ${OSD_PID} >/dev/null 2>&1; do
   pkill -SIGTERM -P ${OSD_PID}
   sleep 1
 done
-# We used to umount here, but the mount is cleanup up when the container
-# exits anyway.
+
+OSD_MNT="$(df --output=target | grep '/var/lib/ceph/osd/' | head -1)"
+umount "$OSD_MNT" || lsof "$OSD_MNT"
