@@ -91,6 +91,10 @@ if [ -n "$OSD_DB_DEVICE" ]; then
   CLI_OPTS="${CLI_OPTS} --block.db ${OSD_DB_DEVICE}"
 fi
 
+if [ -n "$OSD_WAL_DEVICE" ]; then
+  CLI_OPTS="${CLI_OPTS} --block.wal ${OSD_WAL_DEVICE}"
+fi
+
 ceph-volume lvm prepare --bluestore --no-systemd ${CLI_OPTS} --data "${OSD_DEVICE}"
 
 udevadm settle --timeout=600
