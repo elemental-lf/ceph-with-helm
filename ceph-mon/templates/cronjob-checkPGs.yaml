@@ -29,10 +29,12 @@ rules:
       - ""
     resources:
       - pods
+      - pods/exec
     verbs:
       - get
       - list
       - watch
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
@@ -70,6 +72,10 @@ spec:
           serviceAccountName: {{ $serviceAccountName }}
           nodeSelector:
             {{ .Values.labels.mon.node_selector_key }}: {{ .Values.labels.mon.node_selector_value }}
+{{- if .Values.tolerations.mon }}
+          tolerations:
+{{ toYaml .Values.tolerations.mon | indent 12 }}
+{{- end }}
           containers:
           - name: {{ $serviceAccountName }}
 {{ tuple $envAll "ceph_config_helper" | include "helm-toolkit.snippets.image" | indent 12 }}
@@ -80,7 +86,7 @@ spec:
                     fieldPath: metadata.namespace
             command:
               - /tmp/utils-checkPGs.sh
-          volumeMounts:
+            volumeMounts:
               - name: ceph-mon-bin
                 mountPath: /tmp/utils-checkPGs.py
                 subPath: utils-checkPGs.py
