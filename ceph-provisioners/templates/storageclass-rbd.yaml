@@ -32,4 +32,5 @@ parameters:
     userSecretName: {{ .Values.storageclass.rbd.user_secret_name }}
     imageFormat: {{ .Values.storageclass.rbd.image_format | quote }}
     imageFeatures: {{ .Values.storageclass.rbd.image_features }}
+allowVolumeExpansion: {{ .Values.storageclass.rbd.allow_volume_expansion | default "false" }}
 {{- end }}
