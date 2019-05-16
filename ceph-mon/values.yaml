@@ -297,7 +297,6 @@ conf:
       cephx_cluster_require_signatures: true
       cephx_service_require_signatures: false
     osd:
-      osd_max_object_name_len: 256
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
     mds:
