@@ -76,3 +76,4 @@ tmp/
 # All values.yaml except ceph-mon
 */values.yaml
 !ceph-mon/values.yaml
+!helm-toolkit/values.yaml
