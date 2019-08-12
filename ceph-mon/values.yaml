@@ -571,7 +571,13 @@ storageclass:
     user_id: admin
     user_secret_name: pvc-ceph-client-key
     image_format: "2"
-    image_features: layering
+    # images_features is a comma separated list. Other features like
+    #  - exclusive-lock
+    #  - object-map
+    #  - fast-diff
+    #  - journal
+    # only work with rbd-nbd and not with the default krbd client.
+    image_features: "layering"
     allow_volume_expansion: true
   cephfs:
     provision_storage_class: true
