@@ -31,8 +31,6 @@ rules:
       - secrets
     verbs:
       - get
-      - list
-      - watch
       - create
       - delete
   - apiGroups:
@@ -67,6 +65,15 @@ rules:
     resources:
       - events
     verbs:
+      - create
+      - update
+      - patch
+  - apiGroups:
+      - ''
+    resources:
+      - endpoints
+    verbs:
+      - get
       - list
       - watch
       - create

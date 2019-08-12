@@ -57,8 +57,6 @@ rules:
     resources:
       - events
     verbs:
-      - list
-      - watch
       - create
       - update
       - patch
@@ -72,6 +70,17 @@ rules:
     verbs:
       - list
       - get
+  - apiGroups:
+      - ''
+    resources:
+      - endpoints
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
   - apiGroups:
       - extensions
     resources:
@@ -105,7 +114,6 @@ rules:
       - secrets
     verbs:
       - get
-      - list
   - apiGroups:
       - ""
     resources:
