@@ -98,12 +98,6 @@ pod:
     cephfs_provisioner: 2
     rbd_provisioner: 2
     rgw: 2
-  affinity:
-    anti:
-      type:
-        default: preferredDuringSchedulingIgnoredDuringExecution
-      topologyKey:
-        default: kubernetes.io/hostname
   resources:
     enabled: false
     mon:
@@ -696,7 +690,6 @@ manifests:
   configmap_provisioners_bin: true
   deployment_rbd_provisioner: true
   deployment_cephfs_provisioner: true
-  job_cephfs_client_key: true
   job_namespace_client_key_cleaner: true
   job_namespace_client_key: true
   storageclass_cephfs: true
