@@ -45,6 +45,8 @@ data:
   lvmlocal.conf: |
     global {
       use_lvmetad = 0
+      filter = [ "r|^/dev/rbd|", "r|^/dev/nbd|" ]
+      global_filter = [ "r|^/dev/rbd|", "r|^/dev/nbd|" ]
     }
     backup {
       backup = 0
