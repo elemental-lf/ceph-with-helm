@@ -295,6 +295,8 @@ conf:
     mds:
       ms_bind_port_min: 7101
       ms_bind_port_max: 7300
+  cephfs_provisioner:
+    use_pvc_namespace_for_secrets: true
   storage:
     mon:
       directory: /var/lib/openstack-helm/ceph/mon
