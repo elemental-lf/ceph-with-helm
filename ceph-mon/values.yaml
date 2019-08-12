@@ -41,7 +41,6 @@ images:
     # See https://quay.io/repository/external_storage/rbd-provisioner?tab=tags for tags
     ceph_rbd_provisioner:    'quay.io/external_storage/rbd-provisioner:v2.1.1-k8s1.11'
     #
-    fluentbit: docker.io/fluent/fluent-bit:0.12.19
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:3.1.0-mimic-k8s-1.11.3-rev-1'
     ceph_osd_operator: 'docker.io/elementalnet/ceph-osd-operator:9acf142'
@@ -128,13 +127,6 @@ pod:
       limits:
         memory: "1024Mi"
         cpu: "1000m"
-    fluentbit:
-      requests:
-        memory: "5Mi"
-        cpu: "250m"
-      limits:
-        memory: "50Mi"
-        cpu: "500m"
     mds:
       requests:
         memory: "10Mi"
@@ -416,41 +408,6 @@ conf:
   rgw_s3:
     enabled: false
     admin_caps: "users=*;buckets=*;zone=*"
-  fluentbit:
-    - service:
-        header: service
-        Flush: 30
-        Daemon: Off
-        Log_Level: info
-        Parsers_File: parsers.conf
-    - ceph_tail:
-        # NOTE(srwilkers): Despite being exposed, these values should not be
-        # modified, as the ceph-mon logs are always placed here
-        header: input
-        Name: tail
-        Tag: ceph-mon.*
-        Path: /var/log/ceph/*.log
-        Parser: syslog
-        DB: /var/log/ceph/ceph.db
-        DB.Sync: Normal
-        Buffer_Chunk_Size: 1M
-        Buffer_Max_Size: 1M
-        Mem_Buf_Limit: 5MB
-        Refresh_Interval: 10s
-  parsers:
-    - syslog:
-        header: parser
-        Name: syslog
-        Format: regex
-        Regex: '^(?<time>.*[0-9]{2}:[0-9]{2}:[0-9]{2}) (?<host>[^ ]*) (?<app>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? (?<log>.+)$'
-        Time_Key: time
-        Time_Format: "%Y-%m-%dT%H:%M:%S.%L"
-        Time_Keep: On
-        Types: "pid:integer"
-
-
-logging:
-  fluentd: false
 
 dependencies:
   static:
@@ -646,22 +603,6 @@ endpoints:
       api:
         default: 8088
         public: 80
-  fluentd:
-    namespace: null
-    name: fluentd
-    hosts:
-      default: fluentd-logging
-    host_fqdn_override:
-      default: null
-    path:
-      default: null
-    scheme:
-      default: http
-    port:
-      service:
-        default: 24224
-      metrics:
-        default: 24220
         
 monitoring:
   prometheus:

@@ -37,11 +37,6 @@ data:
   init-dirs.sh: |
 {{ tuple "bin/_init-dirs.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 
-{{ if .Values.logging.fluentd }}
-  fluentbit-sidecar.sh: |
-{{ tuple "bin/osd/_fluentbit-sidecar.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-{{ end }}
-
   lvmlocal.conf: |
     global {
       use_lvmetad = 0
