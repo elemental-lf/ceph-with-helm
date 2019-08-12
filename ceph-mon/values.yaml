@@ -220,20 +220,6 @@ network:
       enabled: false
       port: 30004
 
-jobs:
-  pool_checkPGs:
-    # Execute monthly on the 1st at 00:01 AM
-    cron: "1 0 1 * *"
-    history:
-      # Number of successful job to keep
-      successJob: 1
-      # Number of failed job to keep
-      failJob: 1
-    concurrency:
-      # Skip new job if previous job still active
-      execPolicy: Forbid
-    startingDeadlineSecs: 60
-
 conf:
   features:
     mds: true
@@ -623,7 +609,6 @@ manifests:
   service_mon: true
   service_mon_discovery: true
   job_storage_admin_keys: true
-  cronjob_checkPGs: true
   # ceph-osd
   configmap_osd_bin: true
   deployment_osd_operator: true
