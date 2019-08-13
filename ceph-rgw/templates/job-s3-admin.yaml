@@ -17,6 +17,8 @@ limitations under the License.
 {{- if and .Values.manifests.job_s3_admin ( and .Values.conf.features.rgw .Values.conf.rgw_s3.enabled ) }}
 {{- $envAll := . }}
 
+{{- $s3AdminHashStringSuffix := print (tuple "configmap-bin.yaml" . | include "helm-toolkit.utils.template") (.Values.endpoints.ceph_object_store.auth.admin | toYaml) | sha256sum | trunc 8 }}
+
 {{- $serviceAccountName := "rgw-s3-admin" }}
 {{ tuple $envAll "rgw_s3_admin" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 
@@ -53,7 +55,7 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ceph-rgw-s3-admin
+  name: ceph-rgw-s3-admin-{{ $s3AdminHashStringSuffix }}
 spec:
   template:
     metadata:
