@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
 export LC_ALL=C
-: "${K8S_HOST_NETWORK:=0}"
 : "${MON_KEYRING:=/etc/ceph/${CLUSTER}.mon.keyring}"
 : "${ADMIN_KEYRING:=/etc/ceph/${CLUSTER}.client.admin.keyring}"
 : "${MDS_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-mds/${CLUSTER}.keyring}"
@@ -19,11 +18,7 @@ if [[ -z "$MON_IP" ]]; then
   exit 1
 fi
 
-if [[ ${K8S_HOST_NETWORK} -eq 0 ]]; then
-    MON_NAME=${POD_NAME}
-else
-    MON_NAME=${NODE_NAME}
-fi
+MON_NAME=${NODE_NAME}
 MON_DATA_DIR="/var/lib/ceph/mon/${CLUSTER}-${MON_NAME}"
 MONMAP="/etc/ceph/monmap-${CLUSTER}"
 
@@ -39,11 +34,7 @@ function get_mon_config {
 
   while [[ -z "${MONMAP_ADD// }" && "${timeout}" -gt 0 ]]; do
     # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
-    if [[ ${K8S_HOST_NETWORK} -eq 0 ]]; then
-        MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--add {{`{{.metadata.name}}`}} {{`{{.status.podIP}}`}}:${MON_PORT} {{`{{end}}`}} {{`{{end}}`}}")
-    else
-        MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--add {{`{{.spec.nodeName}}`}} {{`{{.status.podIP}}`}}:${MON_PORT} {{`{{end}}`}} {{`{{end}}`}}")
-    fi
+    MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--add {{`{{.spec.nodeName}}`}} {{`{{.status.podIP}}`}}:${MON_PORT} {{`{{end}}`}} {{`{{end}}`}}")
     (( timeout-- ))
     sleep 1
   done

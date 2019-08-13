@@ -18,7 +18,6 @@ limitations under the License.
 
 set -ex
 COMMAND="${@:-liveness}"
-: ${K8S_HOST_NETWORK:=0}
 
 function heath_check () {
   SOCKDIR=${CEPH_SOCKET_DIR:-/run/ceph}
@@ -28,11 +27,7 @@ function heath_check () {
   MON_ID=$(ps auwwx | grep ceph-mon | grep -v "$1" | grep -v grep | sed 's/.*-i\ //;s/\ .*//'|awk '{print $1}')
 
   if [ -z "${MON_ID}" ]; then
-    if [[ ${K8S_HOST_NETWORK} -eq 0 ]]; then
-        MON_NAME=${POD_NAME}
-    else
-        MON_NAME=${NODE_NAME}
-    fi
+    MON_NAME=${NODE_NAME}
   fi
 
   if [ -S "${SOCKDIR}/${SBASE}.${MON_NAME}.${SSUFFIX}" ]; then

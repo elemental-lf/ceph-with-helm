@@ -100,8 +100,6 @@ spec:
           env:
             - name: CLUSTER
               value: "ceph"
-            - name: K8S_HOST_NETWORK
-              value: "1"
             - name: MONMAP
               value: /var/lib/ceph/mon/monmap
             - name: NAMESPACE
