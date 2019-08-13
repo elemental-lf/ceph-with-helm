@@ -25,6 +25,7 @@ export LC_ALL=C
 : "${ADMIN_KEYRING:=/etc/ceph/${CLUSTER}.client.admin.keyring}"
 : "${RGW_KEYRING:=/var/lib/ceph/radosgw/${RGW_NAME}/keyring}"
 : "${RGW_BOOTSTRAP_KEYRING:=/var/lib/ceph/bootstrap-rgw/${CLUSTER}.keyring}"
+: "${RGW_FRONTEND_PORT:=7480}"
 
 if [[ ! -e "/etc/ceph/${CLUSTER}.conf" ]]; then
   echo "ERROR- /etc/ceph/${CLUSTER}.conf must exist; get it from your existing mon"
@@ -54,7 +55,7 @@ if [ ! -e "${RGW_KEYRING}" ]; then
   chmod 0600 "${RGW_KEYRING}"
 fi
 
-RGW_FRONTENDS="civetweb port=$RGW_CIVETWEB_PORT"
+RGW_FRONTENDS="beast port=$RGW_FRONTEND_PORT"
 
 /usr/bin/radosgw \
   --cluster "${CLUSTER}" \

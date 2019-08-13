@@ -155,11 +155,11 @@ pod:
         cpu: "500m"
     rgw:
       requests:
-        memory: "5Mi"
+        memory: "128Mi"
         cpu: "250m"
       limits:
-        memory: "50Mi"
-        cpu: "500m"
+        memory: "512Mi"
+        cpu: "1000m"
     jobs:
       bootstrap:
         limits:

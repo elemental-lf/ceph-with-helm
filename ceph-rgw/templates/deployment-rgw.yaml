@@ -70,7 +70,7 @@ spec:
           env:
             - name: CLUSTER
               value: "ceph"
-            - name: RGW_CIVETWEB_PORT
+            - name: RGW_FRONTEND_PORT
               value: "{{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}"
           command:
             - /tmp/rgw-start.sh
