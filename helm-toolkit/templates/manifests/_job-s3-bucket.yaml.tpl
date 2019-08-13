@@ -36,8 +36,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ printf "%s-%s" $serviceNamePretty "s3-bucket" | quote }}
-  annotations:
-    {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 spec:
   template:
     metadata:
