@@ -5,10 +5,15 @@ import subprocess
 import json
 
 MON_REGEX = r"^\d: ([0-9\.]*):\d+/\d* mon.([^ ]*)$"
-# kubctl_command = 'kubectl get pods --namespace=${NAMESPACE} -l component=mon,application=ceph -o template --template="{ {{"}}"}}range .items{{"}}"}} \\"{{"}}"}}.metadata.name{{"}}"}}\\": \\"{{"}}"}}.status.podIP{{"}}"}}\\" ,   {{"}}"}}end{{"}}"}} }"'
-kubectl_command = 'kubectl get pods --namespace=${NAMESPACE} -l component=mon,application=ceph -o template --template="{ {{"{{"}}range  \$i, \$v  := .items{{"}}"}} {{"{{"}} if \$i{{"}}"}} , {{"{{"}} end {{"}}"}} \\"{{"{{"}}\$v.spec.nodeName{{"}}"}}\\": \\"{{"{{"}}\$v.status.podIP{{"}}"}}\\" {{"{{"}}end{{"}}"}} }"'
+# kubctl_command = 'kubectl get pods --namespace=${NAMESPACE} -l daemon=mon -o template --template="{ {{range .items}} \\"{{.metadata.name}}\\": \\"{{.status.podIP}}\\" ,   {{end}} }"' # noqa E501
+kubectl_command = 'kubectl get pods --namespace=${NAMESPACE} ' \
+    '-l component=mon,application=ceph ' \
+    '-o template ' \
+    '--template="{ {{"{{"}}range  \$i, \$v  := .items{{"}}"}} {{"{{"}} if \$i{{"}}"}} , {{"{{"}} end {{"}}"}} \\"{{"{{"}}\$v.spec.nodeName{{"}}"}}\\": \\"{{"{{"}}\$v.status.podIP{{"}}"}}\\" {{"{{"}}end{{"}}"}} }"'
 
-monmap_command = "ceph --cluster=${NAMESPACE} mon getmap > /tmp/monmap && monmaptool -f /tmp/monmap --print"
+
+monmap_command = 'ceph --cluster=${CLUSTER} mon getmap > /tmp/monmap && '\
+    'monmaptool -f /tmp/monmap --print'
 
 
 def extract_mons_from_monmap():
@@ -20,28 +25,31 @@ def extract_mons_from_monmap():
             mons[m.group(2)] = m.group(1)
     return mons
 
+
 def extract_mons_from_kubeapi():
     kubemap = subprocess.check_output(kubectl_command, shell=True)
     return json.loads(kubemap)
 
+
 current_mons = extract_mons_from_monmap()
 expected_mons = extract_mons_from_kubeapi()
 
-print "current mons:", current_mons
-print "expected mons:", expected_mons
+print('current mons:{}'.format(current_mons))
+print('expected mons:{}'.format(expected_mons))
 
 for mon in current_mons:
     removed_mon = False
-    if not mon in expected_mons:
-        print "removing zombie mon ", mon
-        subprocess.call(["ceph", "--cluster", os.environ["NAMESPACE"], "mon", "remove", mon])
+    if mon not in expected_mons:
+        print("removing zombie mon {}".format(mon))
+        subprocess.call(["ceph", "--cluster", os.environ["CLUSTER"], "mon", "remove", mon])
         removed_mon = True
-    elif current_mons[mon] != expected_mons[mon]: # check if for some reason the ip of the mon changed
-        print "ip change dedected for pod ", mon
+    # check if for some reason the ip of the mon changed
+    elif current_mons[mon] != expected_mons[mon]:
+        print("ip change dedected for pod {}".format(mon))
         subprocess.call(["kubectl", "--namespace", os.environ["NAMESPACE"], "delete", "pod", mon])
         removed_mon = True
-        print "deleted mon %s via the kubernetes api" % mon
+        print("deleted mon {} via the kubernetes api".format(mon))
 
 
 if not removed_mon:
-    print "no zombie mons found ..."
+    print("no zombie mons found ...")

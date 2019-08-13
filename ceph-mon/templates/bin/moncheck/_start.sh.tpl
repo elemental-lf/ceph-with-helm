@@ -1,12 +1,12 @@
 #!/bin/bash
-set -ex
+set -e
 export LC_ALL=C
 
 function watch_mon_health {
-  while [ true ]; do
-    echo "checking for zombie mons"
+  while true; do
+    echo "Checking for zombie mons"
     /tmp/moncheck-reap-zombies.py || true
-    echo "sleep 30 sec"
+    echo "Sleep 30 sec"
     sleep 30
   done
 }
