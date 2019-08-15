@@ -17,6 +17,7 @@ limitations under the License.
 */}}
 
 set -ex
-if [ -z "$(ceph config get osd.0 public_network)" ]; then
- ceph config assimilate-conf -i /etc/ceph/ceph-bootstrap.conf
-fi
+# Always try to integrate our configuration into the central config
+# database.  This will add new and overwrite already set values.  No config
+# values will be deleted as we'd a three-way merge for that.
+ceph config assimilate-conf -i /etc/ceph/ceph-bootstrap.conf
