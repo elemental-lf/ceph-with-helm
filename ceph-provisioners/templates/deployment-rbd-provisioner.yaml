@@ -174,7 +174,7 @@ spec:
 {{ tuple $envAll $envAll.Values.pod.resources.rbd_provisioner | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
             - name: PROVISIONER_NAME
-              value: {{ .Values.storageclass.rbd.provisioner }}
+              value: ceph.com/rbd
             - name: POD_NAME
               valueFrom:
                 fieldRef:

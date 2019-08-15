@@ -195,7 +195,7 @@ spec:
 {{ tuple $envAll $envAll.Values.pod.resources.cephfs_provisioner | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
             - name: PROVISIONER_NAME
-              value: {{ .Values.storageclass.cephfs.provisioner }}
+              value: ceph.com/cephfs
             - name: PROVISIONER_SECRET_NAMESPACE
 {{ if .Values.conf.cephfs_provisioner.use_pvc_namespace_for_secrets }}
               value: ''

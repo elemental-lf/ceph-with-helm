@@ -392,6 +392,41 @@ conf:
   rgw_s3:
     enabled: false
     admin_caps: "users=*;buckets=*;zone=*"
+  storageclasses:
+    # TODO: While it is possible to define further storage classes here, the creation of RBD client keys is still
+    # TODO: hardcoded to the storage class name "rbd" and is not done for other RBD backed storage classes.
+    # Two provisioners are supported: "ceph.com/rbd" and "ceph.com/cephfs".
+    rbd:
+      provision_storage_class: true
+      ceph_configmap_name: ceph-etc
+      default_storage_class: true
+      provisioner: ceph.com/rbd
+      allow_volume_expansion: true
+      parameters:
+        pool: rbd
+        adminId: admin
+        adminSecretName: pvc-ceph-conf-combined-storageclass
+        adminSecretNamespace: ceph
+        userId: admin
+        userSecretName: pvc-ceph-client-key
+        imageFormat: "2"
+        # images_features is a comma separated list. Other features like
+        #  - exclusive-lock
+        #  - object-map
+        #  - fast-diff
+        #  - journal
+        # only work with rbd-nbd and not with the default krbd client.
+        imageFeatures: layering
+    cephfs:
+      provision_storage_class: true
+      provisioner: ceph.com/cephfs
+      metadata:
+        name: cephfs
+      parameters:
+        adminId: admin
+        adminSecretName: pvc-ceph-conf-combined-storageclass
+        adminSecretNamespace: ceph
+        #user_secret_name: pvc-ceph-cephfs-client-key
 
 dependencies:
   static:
@@ -499,39 +534,6 @@ ceph_mgr_modules_config:
 #    num_rep: "3"
 #    min_size: "2"
 
-# if you change provision_storage_class to false
-# it is presumed you manage your own storage
-# class definition externally
-storageclass:
-  rbd:
-    provision_storage_class: true
-    provisioner: ceph.com/rbd
-    name: rbd
-    monitors: null
-    pool: rbd
-    admin_id: admin
-    admin_secret_name: pvc-ceph-conf-combined-storageclass
-    admin_secret_namespace: ceph
-    user_id: admin
-    user_secret_name: pvc-ceph-client-key
-    image_format: "2"
-    # images_features is a comma separated list. Other features like
-    #  - exclusive-lock
-    #  - object-map
-    #  - fast-diff
-    #  - journal
-    # only work with rbd-nbd and not with the default krbd client.
-    image_features: "layering"
-    allow_volume_expansion: true
-  cephfs:
-    provision_storage_class: true
-    provisioner: ceph.com/cephfs
-    name: cephfs
-    admin_id: admin
-    user_secret_name: pvc-ceph-cephfs-client-key
-    admin_secret_name: pvc-ceph-conf-combined-storageclass
-    admin_secret_namespace: ceph
-
 endpoints:
   cluster_domain_suffix: cluster.local
   ceph_mon:
@@ -623,10 +625,9 @@ manifests:
   configmap_provisioners_bin: true
   deployment_rbd_provisioner: true
   deployment_cephfs_provisioner: true
-  job_namespace_client_key_cleaner: true
-  job_namespace_client_key: true
-  storageclass_cephfs: true
-  storageclass_rbd: true
+  job_namespace_rbd_client_key_cleaner: true
+  job_namespace_rbd_client_key: true
+  storageclasses: true
   # ceph-rgw
   configmap_rgw_bin: true
   deployment_rgw: true

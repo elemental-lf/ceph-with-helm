@@ -14,13 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and .Values.manifests.job_cephfs_client_key .Values.deployment.cephfs_provisioner }}
+{{- if and .Values.manifests.job_namespace_rbd_client_key .Values.deployment.client_secrets }}
 {{- $envAll := . }}
 
 {{- $nsStringSuffix := $envAll.Release.Namespace | sha256sum | trunc 8 }}
 
-{{- $serviceAccountName := "ceph-cephfs-client-key-generator" }}
-{{ tuple $envAll "cephfs_client_key_generator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{- $serviceAccountName := print $envAll.Release.Name "-ceph-ns-key-generator" }}
+{{ tuple $envAll "namespace_client_key_generator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
@@ -54,7 +54,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
   name: {{ printf "%s-%s" $serviceAccountName $nsStringSuffix }}
-  namespace: {{ .Values.storageclass.rbd.admin_secret_namespace }}
+  namespace: {{ .Values.conf.storageclasses.rbd.parameters.adminSecretNamespace }}
 rules:
   - apiGroups:
       - ""
@@ -68,7 +68,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
   name: {{ printf "%s-%s" $serviceAccountName $nsStringSuffix }}
-  namespace: {{ .Values.storageclass.rbd.admin_secret_namespace }}
+  namespace: {{ .Values.conf.storageclasses.rbd.parameters.adminSecretNamespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -81,19 +81,19 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ceph-cephfs-client-key-generator
+  name: {{ $serviceAccountName }}
 spec:
   template:
     metadata:
       labels:
-{{ tuple $envAll "ceph" "cephfs-client-key-generator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+{{ tuple $envAll "ceph" "client-key-generator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
         {{ $envAll.Values.labels.job.node_selector_key }}: {{ $envAll.Values.labels.job.node_selector_value }}
       initContainers:
-{{ tuple $envAll "cephfs_client_key_generator" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll "namespace_client_key_generator" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name:  ceph-storage-keys-generator
 {{ tuple $envAll "ceph_config_helper" | include "helm-toolkit.snippets.image" | indent 10 }}
@@ -103,22 +103,22 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: PVC_CEPH_CEPHFS_STORAGECLASS_USER_SECRET_NAME
-              value: {{ .Values.storageclass.cephfs.user_secret_name }}
-            - name: PVC_CEPH_CEPHFS_STORAGECLASS_ADMIN_SECRET_NAME
-              value: {{ .Values.storageclass.cephfs.admin_secret_name }}
-            - name: PVC_CEPH_CEPHFS_STORAGECLASS_DEPLOYED_NAMESPACE
-              value: {{ .Values.storageclass.cephfs.admin_secret_namespace }}
+            - name: PVC_CEPH_RBD_STORAGECLASS_USER_SECRET_NAME
+              value: {{ .Values.conf.storageclasses.rbd.parameters.userSecretName }}
+            - name: PVC_CEPH_RBD_STORAGECLASS_ADMIN_SECRET_NAME
+              value: {{ .Values.conf.storageclasses.rbd.parameters.adminSecretName }}
+            - name: PVC_CEPH_RBD_STORAGECLASS_DEPLOYED_NAMESPACE
+              value: {{ .Values.conf.storageclasses.rbd.parameters.adminSecretNamespace }}
           command:
-            - /tmp/provisioner-cephfs-client-key-manager.sh
+            - /tmp/provisioner-rbd-namespace-client-key-manager.sh
           volumeMounts:
-            - name: ceph-provisioners-bin
-              mountPath: /tmp/provisioner-cephfs-client-key-manager.sh
-              subPath: provisioner-cephfs-client-key-manager.sh
+            - name: ceph-provisioners-bin-clients
+              mountPath: /tmp/provisioner-rbd-namespace-client-key-manager.sh
+              subPath: provisioner-rbd-namespace-client-key-manager.sh
               readOnly: true
       volumes:
-        - name: ceph-provisioners-bin
+        - name: ceph-provisioners-bin-clients
           configMap:
-            name: ceph-provisioners-bin
+            name: {{ printf "%s-%s" $envAll.Release.Name "ceph-provisioners-bin-clients" | quote }}
             defaultMode: 0555
 {{- end }}
