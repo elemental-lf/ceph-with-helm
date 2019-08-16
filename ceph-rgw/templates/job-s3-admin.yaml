@@ -90,7 +90,9 @@ spec:
           command:
             - /tmp/rgw-s3-admin.sh
           volumeMounts:
-            - name: etcceph
+            - name: pod-tmp
+              mountPath: /tmp
+            - name: pod-etc-ceph
               mountPath: /etc/ceph
             - name: ceph-rgw-bin
               mountPath: /tmp/rgw-s3-admin.sh
@@ -105,7 +107,9 @@ spec:
               subPath: ceph.client.admin.keyring
               readOnly: true
       volumes:
-        - name: etcceph
+        - name: pod-tmp
+          emptyDir: {}
+        - name: pod-etc-ceph
           emptyDir: {}
         - name: ceph-rgw-bin
           configMap:

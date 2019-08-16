@@ -61,6 +61,12 @@ spec:
             - name: CLUSTER
               value: "ceph"
           volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
+            - name: pod-run
+              mountPath: /run
+            - name: pod-etc-ceph
+              mountPath: /etc/ceph
             - name: ceph-client-bin
               mountPath: /tmp/init-dirs.sh
               subPath: init-dirs.sh
@@ -68,11 +74,6 @@ spec:
             - name: pod-var-lib-ceph
               mountPath: /var/lib/ceph
               readOnly: false
-            - name: pod-run
-              mountPath: /run
-              readOnly: false
-            - name: pod-etc-ceph
-              mountPath: /etc/ceph
       containers:
         - name: ceph-mgr
 {{ tuple $envAll "ceph_mgr" | include "helm-toolkit.snippets.image" | indent 10 }}
@@ -119,6 +120,12 @@ spec:
            initialDelaySeconds: 30
            timeoutSeconds: 5
           volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
+            - name: pod-run
+              mountPath: /run
+            - name: pod-etc-ceph
+              mountPath: /etc/ceph
             - name: ceph-client-bin
               mountPath: /mgr-start.sh
               subPath: mgr-start.sh
@@ -127,8 +134,6 @@ spec:
               mountPath: /tmp/mgr-check.sh
               subPath: mgr-check.sh
               readOnly: true
-            - name: pod-etc-ceph
-              mountPath: /etc/ceph
             - name: ceph-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
@@ -144,10 +149,12 @@ spec:
             - name: pod-var-lib-ceph
               mountPath: /var/lib/ceph
               readOnly: false
-            - name: pod-run
-              mountPath: /run
-              readOnly: false
       volumes:
+        - name: pod-tmp
+          emptyDir: {}
+        - name: pod-run
+          emptyDir:
+           medium: "Memory"
         - name: pod-etc-ceph
           emptyDir: {}
         - name: ceph-client-bin
@@ -160,9 +167,6 @@ spec:
             defaultMode: 0444
         - name: pod-var-lib-ceph
           emptyDir: {}
-        - name: pod-run
-          emptyDir:
-            medium: "Memory"
         - name: ceph-client-admin-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.admin }}

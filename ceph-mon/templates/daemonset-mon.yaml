@@ -83,6 +83,12 @@ spec:
             - name: CLUSTER
               value: "ceph"
           volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
+            - name: pod-run
+              mountPath: /run
+            - name: pod-etc-ceph
+              mountPath: /etc/ceph
             - name: ceph-mon-bin
               mountPath: /tmp/init-dirs.sh
               subPath: init-dirs.sh
@@ -149,6 +155,12 @@ spec:
            initialDelaySeconds: 60
            periodSeconds: 60
           volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
+            - name: pod-run
+              mountPath: /run
+            - name: pod-etc-ceph
+              mountPath: /etc/ceph
             - name: ceph-mon-bin
               mountPath: /tmp/mon-start.sh
               subPath: mon-start.sh
@@ -198,6 +210,13 @@ spec:
             - name: varlog
               mountPath: /var/log/ceph
       volumes:
+        - name: pod-tmp
+          emptyDir: {}
+        - name: pod-run
+          emptyDir:
+           medium: "Memory"
+        - name: pod-etc-ceph
+          emptyDir: {}
         - name: varlog
           emptyDir: {}
         - name: ceph-mon-bin

@@ -72,4 +72,15 @@ spec:
                   fieldPath: metadata.namespace
             - name: OPERATOR_NAME
               value: "ceph-osd-operator"
+          volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
+            - name: pod-run
+              mountPath: /run
+      volumes:
+        - name: pod-tmp
+          emptyDir: {}
+        - name: pod-run
+          emptyDir:
+           medium: "Memory"
 {{- end }}
