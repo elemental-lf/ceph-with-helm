@@ -21,6 +21,7 @@ fi
 MON_NAME=${NODE_NAME}
 MON_DATA_DIR="/var/lib/ceph/mon/${CLUSTER}-${MON_NAME}"
 MONMAP="/etc/ceph/monmap-${CLUSTER}"
+TIMEOUT=10
 
 # Make the monitor directory
 su -s /bin/sh -c "mkdir -p \"${MON_DATA_DIR}\"" ceph
@@ -29,27 +30,27 @@ function get_mon_config {
   # Get fsid from ceph.conf
   local fsid=$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)
 
-  timeout=10
+  # If monmap exists and this mon is already there, don't overwrite monmap
+  if [ -f "${MONMAP}" ]; then
+      if monmaptool --print "${MONMAP}" | grep -q "${MON_IP// }"":${MON_PORT}"; then
+          echo "${MON_IP} already exists in monmap ${MONMAP}, continuing."
+          return
+      fi
+  fi
+
+  remaining=$TIMEOUT
   MONMAP_ADD=""
 
-  while [[ -z "${MONMAP_ADD// }" && "${timeout}" -gt 0 ]]; do
+  while [[ -z "${MONMAP_ADD// }" && "${remaining}" -gt 0 ]]; do
     # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
     MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--add {{`{{.spec.nodeName}}`}} {{`{{.status.podIP}}`}}:${MON_PORT} {{`{{end}}`}} {{`{{end}}`}}")
-    (( timeout-- ))
+    (( remaining-- ))
     sleep 1
   done
 
   if [[ -z "${MONMAP_ADD// }" ]]; then
+      echo "ERROR- No ceph-mon pods found after ${TIMEOUT} seconds, exiting (namespace ${NAMESPACE}, KUBECTL_PARAM: ${KUBECTL_PARAM})."
       exit 1
-  fi
-
-  # if monmap exists and the mon is already there, don't overwrite monmap
-  if [ -f "${MONMAP}" ]; then
-      monmaptool --print "${MONMAP}" |grep -q "${MON_IP// }"":${MON_PORT}"
-      if [ $? -eq 0 ]; then
-          echo "${MON_IP} already exists in monmap ${MONMAP}"
-          return
-      fi
   fi
 
   # Create a monmap with the Pod Names and IP
@@ -83,9 +84,9 @@ else
   echo "Trying to get the most recent monmap..."
   # Ignore when we timeout, in most cases that means the cluster has no quorum or
   # no mons are up and running yet
-  timeout 5 ceph --cluster "${CLUSTER}" mon getmap -o ${MONMAP} || true
+  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon getmap -o ${MONMAP} || true
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
-  timeout 7 ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}:${MON_PORT}" || true
+  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}:${MON_PORT}" || true
 fi
 
 # start MON
