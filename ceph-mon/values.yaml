@@ -81,6 +81,161 @@ tolerations:
   provisioner: []
 
 pod:
+  security_context:
+    # ceph-mon
+    mon:
+      pod:
+        runAsUser: 65534
+      container:
+        init_dirs:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+        mon:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+    moncheck:
+      pod:
+        runAsUser: 65534
+      container:
+        moncheck:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+    bootstrap:
+      pod:
+        runAsUser: 65534
+      container:
+        bootstrap:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+    storage_keys_generator:
+      pod:
+        runAsUser: 65534
+      container:
+        storage_keys_generator:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+    keyring_generator:
+      pod:
+        runAsUser: 65534
+      container:
+        keyring_generator:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+
+    # ceph-osd
+    osd:
+      pod:
+        runAsUser: 65534
+      container:
+        init_dirs:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+        init:
+          runAsUser: 0
+          privileged: true
+          readOnlyRootFilesystem: true
+        osd:
+          runAsUser: 0
+          privileged: true
+          readOnlyRootFilesystem: true
+    osd_maint:
+      pod:
+        runAsUser: 65534
+      container:
+        init_dirs:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+        maint:
+          runAsUser: 0
+          privileged: true
+          readOnlyRootFilesystem: true
+    osd_operator:
+      pod:
+        # This is the user ansible-operator inside of the container.
+        runAsUser: 1001
+      container:
+        operator:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+
+    # ceph-client
+    mds:
+      pod:
+        runAsUser: 65534
+      container:
+        init_dirs:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+        mds:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+    mgr:
+      pod:
+        runAsUser: 65534
+      container:
+        init_dirs:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+        mgr:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+    rbd_pool:
+      pod:
+        runAsUser: 65534
+      container:
+        rbd_pool:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+
+    # ceph-provisioner
+    provisioner:
+      pod:
+        runAsUser: 65534
+      container:
+        cephfs_provisioner:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        rbd_provisioner:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+    namespace_client_key_generator:
+      pod:
+        runAsUser: 65534
+      container:
+        namespace_client_key_generator:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+    namespace_client_key_cleaner:
+      pod:
+        runAsUser: 65534
+      container:
+        namespace_client_key_cleaner:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+
+    # ceph-rgw
+    rgw:
+      pod:
+        runAsUser: 65534
+      container:
+        init_dirs:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        rgw:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+    rgw_s3_admin:
+      pod:
+        runAsUser: 65534
+      container:
+        s3_admin:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+  #
   dns_policy: "ClusterFirstWithHostNet"
   affinity:
     anti:

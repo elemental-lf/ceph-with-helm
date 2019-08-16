@@ -25,6 +25,7 @@ spec:
       labels:
 {{ tuple $envAll "ceph" "osd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
+{{ dict "envAll" $envAll "application" "osd" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.osd.node_selector_key }}: {{ .Values.labels.osd.node_selector_value }}
@@ -34,8 +35,9 @@ spec:
       priorityClassName: {{ $serviceAccountName }}
       initContainers:
 {{ tuple $envAll "osd" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
-        - name: ceph-init-dirs
+        - name: init-dirs
 {{ tuple $envAll "ceph_osd" | include "helm-toolkit.snippets.image" | indent 10 }}
+{{ dict "envAll" $envAll "application" "osd" "container" "init_dirs" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           command:
             - /tmp/init-dirs.sh
           env:
@@ -63,11 +65,10 @@ spec:
             - name: pod-var-lib-ceph
               mountPath: /var/lib/ceph
               readOnly: false
-        - name: osd-init
+        - name: init
 {{ tuple $envAll "ceph_osd" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.osd | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
-          securityContext:
-            privileged: true
+{{ dict "envAll" $envAll "application" "osd" "container" "init" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
           # NOTE(portdirect): These environment variables will be populated
           # dynamicly at the point of render and added to all containers in the
@@ -110,16 +111,17 @@ spec:
             - name: run-lvm
               mountPath: /run/lvm
               readOnly: false
+            - name: varlog
+              mountPath: /var/log/ceph
             - name: ceph-osd-bin
               mountPath: /etc/lvm/lvmlocal.conf
               subPath: lvmlocal.conf
               readOnly: true
       containers:
-        - name: osd-pod
+        - name: osd
 {{ tuple $envAll "ceph_osd" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.osd | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
-          securityContext:
-            privileged: true
+{{ dict "envAll" $envAll "application" "osd" "container" "osd" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
           # - name: OSD_DEVICE
           #   value: /dev/sdb

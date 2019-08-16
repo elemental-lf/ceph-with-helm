@@ -62,15 +62,16 @@ spec:
       labels:
 {{ tuple $envAll "ceph" "rgw-s3-admin" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
-      namespace: ceph
+{{ dict "envAll" $envAll "application" "rgw_s3_admin" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
         {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
       containers:
-        - name: create-s3-admin
+        - name: s3-admin
 {{ tuple $envAll "ceph_config_helper" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.rgw_s3_admin | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "rgw_s3_admin" "container" "s3_admin" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
             - name: S3_ADMIN_USERNAME
               valueFrom:

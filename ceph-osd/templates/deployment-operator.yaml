@@ -52,6 +52,7 @@ spec:
       labels:
 {{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
+{{ dict "envAll" $envAll "application" "osd_operator" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.osd_operator.node_selector_key }}: {{ .Values.labels.osd_operator.node_selector_value }}
@@ -59,9 +60,10 @@ spec:
       initContainers:
 {{ tuple $envAll "osd-maint" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
-        - name: ceph-osd-operator
+        - name: operator
 {{ tuple $envAll "ceph_osd_operator" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.osd_operator | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "osd_operator" "container" "operator" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           ports:
           - containerPort: 60000
             name: metrics
@@ -77,8 +79,16 @@ spec:
               mountPath: /tmp
             - name: pod-run
               mountPath: /run
+            - name: pod-opt-ansible-ansible-tmp
+              mountPath: /opt/ansible/.ansible/tmp
+            - name: pod-home-ansible-operator-ansible-tmp
+              mountPath: /home/ansible-operator/.ansible/tmp
       volumes:
         - name: pod-tmp
+          emptyDir: {}
+        - name: pod-opt-ansible-ansible-tmp
+          emptyDir: {}
+        - name: pod-home-ansible-operator-ansible-tmp
           emptyDir: {}
         - name: pod-run
           emptyDir:
