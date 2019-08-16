@@ -53,7 +53,7 @@ values: |
 usage: |
   {{ tuple . "calico_node" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" }}
 return: |
-  - name: init
+  - name: kubernetes-entrypoint
     image: "quay.io/stackanetes/kubernetes-entrypoint:v0.3.1"
     imagePullPolicy: IfNotPresent
     env:
@@ -111,7 +111,7 @@ return: |
 {{- end -}}
 {{- $deps := $envAll.Values.__kubernetes_entrypoint_init_container.deps }}
 
-- name: init
+- name: kubernetes-entrypoint
 {{ tuple $envAll "dep_check" | include "helm-toolkit.snippets.image" | indent 2 }}
   env:
     - name: POD_NAME
