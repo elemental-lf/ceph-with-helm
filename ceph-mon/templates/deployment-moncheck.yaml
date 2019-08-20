@@ -116,9 +116,6 @@ spec:
             defaultMode: 0555
         - name: pod-var-lib-ceph
           emptyDir: {}
-        - name: pod-run
-          emptyDir:
-            medium: "Memory"
         - name: ceph-client-admin-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.admin }}
