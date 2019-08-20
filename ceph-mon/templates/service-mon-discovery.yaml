@@ -27,7 +27,8 @@ metadata:
     # guess at some small timing change causing statefulset+2 to not see the
     # now ready statefulset+1, and because we do not tolerate unready endpoints
     # a newly provisioned ceph-mon will most certainly never see itself in the
-    # peer list.  This change allows us to form a quorum reliably everytime
+    # peer list.  This change allows us to form a quorum reliably every time.
+    # See also publishNotReadyAddresses below.
     service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   ports:
@@ -37,4 +38,5 @@ spec:
   selector:
 {{ tuple $envAll "ceph" "mon" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
   clusterIP: None
+  publishNotReadyAddresses: true
 {{- end }}
