@@ -86,6 +86,14 @@ function manage_pool () {
   create_pool "${POOL_APPLICATION}" "${POOL_NAME}" "${POOL_REPLICATION}" "${POOL_PLACEMENT_GROUPS}" "${POOL_CRUSH_RULE}" "$POOL_EC_PROFILE_SPEC"
 }
 
+function wait_for_inactive_pgs () {
+  # Loop until all pgs are active
+  while [[ `ceph --cluster ${CLUSTER} pg ls | tail -n +2 | grep -v "active+"` ]]
+  do
+    sleep 3
+  done
+}
+
 {{ $targetNumOSD := .Values.conf.pool.target.osd }}
 {{ $targetPGperOSD := .Values.conf.pool.target.pg_per_osd }}
 {{ $crushRuleDefault := .Values.conf.pool.default.crush_rule }}
@@ -98,3 +106,5 @@ manage_pool {{ .application }} {{ .name }} {{ .replication }} {{ $targetNumOSD }
 {{- if .Values.conf.pool.crush.tunables }}
 ceph --cluster "${CLUSTER}" osd crush tunables {{ .Values.conf.pool.crush.tunables }}
 {{- end }}
+
+wait_for_inactive_pgs
