@@ -722,7 +722,7 @@ ceph_mgr_enabled_modules:
 ceph_mgr_modules_config:
   balancer:
     active: 1
-    mode: upmap
+    mode: crush-compat
 #  dashboard:
 #    port: 7000
 #  localpool:
