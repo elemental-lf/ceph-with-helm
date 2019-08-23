@@ -16,8 +16,11 @@ limitations under the License.
 
 {{- define "helm-toolkit.snippets.kubernetes_upgrades_deployment" -}}
 {{- $envAll := index . 0 -}}
-{{- with $envAll.Values.pod.lifecycle.upgrades.deployments -}}
+{{- $component := index . 1 -}}
+{{- $upgradeMap := index $envAll.Values.pod.lifecycle.upgrades.deployments $component -}}
+{{- with $upgradeMap -}}
 revisionHistoryLimit: {{ .revision_history }}
+minReadySeconds: {{ .min_ready_seconds }}
 strategy:
   type: {{ .pod_replacement_strategy }}
   {{- if eq .pod_replacement_strategy "RollingUpdate" }}

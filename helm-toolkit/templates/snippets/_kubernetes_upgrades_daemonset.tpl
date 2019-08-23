@@ -18,18 +18,14 @@ limitations under the License.
 {{- $envAll := index . 0 -}}
 {{- $component := index . 1 -}}
 {{- $upgradeMap := index $envAll.Values.pod.lifecycle.upgrades.daemonsets $component -}}
-{{- $pod_replacement_strategy := $envAll.Values.pod.lifecycle.upgrades.daemonsets.pod_replacement_strategy -}}
 {{- with $upgradeMap -}}
-{{- if .enabled }}
+revisionHistoryLimit: {{ .revision_history }}
 minReadySeconds: {{ .min_ready_seconds }}
 updateStrategy:
-  type: {{ $pod_replacement_strategy }}
-  {{- if $pod_replacement_strategy }}
-  {{- if eq $pod_replacement_strategy "RollingUpdate" }}
+  type: {{ .pod_replacement_strategy }}
+  {{- if eq .pod_replacement_strategy "RollingUpdate" }}
   rollingUpdate:
-    maxUnavailable: {{ .max_unavailable }}
-  {{- end }}
+    maxUnavailable: {{ .rolling_update.max_unavailable }}
   {{- end }}
 {{- end }}
-{{- end -}}
 {{- end -}}
