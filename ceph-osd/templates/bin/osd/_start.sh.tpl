@@ -86,16 +86,29 @@ ceph \
   crush \
   create-or-move -- "${OSD_ID}" "${OSD_WEIGHT}" ${CRUSH_LOCATION}
 
-# The flock prevents two ceph-osd processes from accessing the same
-# OSD device. This may happen when pods are updated and the old and
-# new version exist simultaneously.
-# The recorded PID is actually the PID of the flock process.
-exec flock --exclusive --timeout 15 \
-    "/dev/${LVM2_VG_NAME}/${OSD_LV_NAME}" \
-    ceph-osd \
-    --cluster "${CLUSTER}" \
-    -f \
-    -i "${OSD_ID}" \
-    --setuser ceph \
-    --setgroup disk & echo $! > /run/ceph-osd.pid
+# Also look at the corresponding code in _stop.sh.tpl.
+if ceph -v | fgrep -q nautilus; then
+    # Starting with Nautilus Ceph implements flock in the ceph-osd daemon directly.
+    # See: https://tracker.ceph.com/issues/38150, https://github.com/ceph/ceph/pull/26245.
+    # There are backporting tickets for Mimic and Luminous, but they haven't been acted on since February 2019. (27.08.2019)
+    exec ceph-osd \
+        --cluster "${CLUSTER}" \
+        -f \
+        -i "${OSD_ID}" \
+        --setuser ceph \
+        --setgroup disk & echo $! > /run/ceph-osd.pid
+else
+    # The flock prevents two ceph-osd processes from accessing the same
+    # OSD device. This may happen when pods are updated and the old and
+    # new version exist simultaneously.
+    # The recorded PID is actually the PID of the flock process.
+    exec flock --exclusive --timeout 15 \
+        "/dev/${LVM2_VG_NAME}/${OSD_LV_NAME}" \
+        ceph-osd \
+        --cluster "${CLUSTER}" \
+        -f \
+        -i "${OSD_ID}" \
+        --setuser ceph \
+        --setgroup disk & echo $! > /run/ceph-osd.pid
+fi
 wait
