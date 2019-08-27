@@ -142,9 +142,6 @@ pod:
       pod:
         runAsUser: 65534
       container:
-        init_dirs:
-          runAsUser: 0
-          readOnlyRootFilesystem: true
         maint:
           runAsUser: 0
           privileged: true
