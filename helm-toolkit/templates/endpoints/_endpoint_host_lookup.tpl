@@ -37,7 +37,6 @@ return: |
 {{- $endpoint := index . 1 -}}
 {{- $context := index . 2 -}}
 {{- $endpointMap := index $context.Values.endpoints ( $type | replace "-" "_" ) }}
-{{- $endpointScheme := $endpointMap.scheme }}
 {{- $endpointHost := index $endpointMap.hosts $endpoint | default $endpointMap.hosts.default }}
 {{- if regexMatch "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+" $endpointHost }}
 {{- $endpointHostname := printf "%s" $endpointHost }}
