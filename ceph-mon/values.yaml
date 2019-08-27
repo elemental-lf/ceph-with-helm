@@ -140,11 +140,11 @@ pod:
           readOnlyRootFilesystem: true
     osd_maint:
       pod:
-        runAsUser: 65534
+        # Needs to be set to root so that kubectl exec processes are started as root.
+        runAsUser: 0
       container:
         maint:
-          runAsUser: 0
-          privileged: true
+          runAsUser: 65534
           readOnlyRootFilesystem: true
     osd_operator:
       pod:
