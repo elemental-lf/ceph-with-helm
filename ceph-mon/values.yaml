@@ -456,6 +456,9 @@ conf:
   ceph:
     global:
       cephx_cluster_require_signatures: true
+      # This disables a warning which is generated for OSDs which were created before Nautilus.
+      # Some statistics related to BlueStore metadata and data usage will probably be wrong.
+      bluestore_warn_on_legacy_statfs: false
     osd:
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
