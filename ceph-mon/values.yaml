@@ -455,11 +455,7 @@ conf:
             caps mon = "allow profile bootstrap-rbd"
   ceph:
     global:
-      # auth
-      cephx: true
-      cephx_require_signatures: false
       cephx_cluster_require_signatures: true
-      cephx_service_require_signatures: false
     osd:
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
