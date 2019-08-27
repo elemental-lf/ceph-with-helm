@@ -740,7 +740,10 @@ endpoints:
       default: null
     port:
       mon:
+        # Don't change these ports. They need to be set to the official values, so that automatic discovery of the
+        # messaging protocol works.
         default: 6789
+        v2: 3300
   ceph_mgr:
     namespace: null
     hosts:

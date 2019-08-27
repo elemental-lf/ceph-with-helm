@@ -22,13 +22,8 @@ limitations under the License.
 {{- if .Values.deployment.ceph }}
 
 {{- if empty .Values.conf.ceph.global.mon_host -}}
-{{- $monHost := tuple "ceph_mon" "discovery" "mon" . | include "helm-toolkit.endpoints.host_and_port_endpoint_uri_lookup" }}
+{{- $monHost := tuple "ceph_mon" "discovery" . | include "helm-toolkit.endpoints.endpoint_host_lookup" }}
 {{- $_ := $monHost | set .Values.conf.ceph.global "mon_host" -}}
-{{- end -}}
-
-{{- if empty .Values.conf.ceph.global.mon_addr -}}
-{{- $monPort := tuple "ceph_mon" "internal" "mon" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
-{{- $_ := printf ":%s" $monPort | set .Values.conf.ceph.global "mon_addr" -}}
 {{- end -}}
 
 {{- if empty .Values.conf.ceph.global.fsid -}}
@@ -43,7 +38,7 @@ limitations under the License.
 {{- $_ := .Values.network.public | set .Values.conf.ceph.osd "public_network" -}}
 {{- end -}}
 
-{{- $_ := pick .Values.conf.ceph.global "cephx" "fsid" "mon_addr" "mon_host" | dict "global" | set .Values.conf "ceph_minimal" }}
+{{- $_ := pick .Values.conf.ceph.global "fsid" "mon_host" | dict "global" | set .Values.conf "ceph_minimal" }}
 
 ---
 apiVersion: v1

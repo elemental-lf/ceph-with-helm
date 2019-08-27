@@ -97,4 +97,4 @@ exec /usr/bin/ceph-mon \
   -d \
   -i ${MON_NAME} \
   --mon-data "${MON_DATA_DIR}" \
-  --public-addr "${MON_IP}:${MON_PORT}"
+  --public-addr "${MON_IP}"
