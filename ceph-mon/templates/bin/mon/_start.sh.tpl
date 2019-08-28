@@ -35,7 +35,7 @@ function get_mon_config {
 
   while [[ -z "${MONMAP_ADD// }" && "${remaining}" -gt 0 ]]; do
     # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
-    MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--add {{`{{.spec.nodeName}}`}} {{`{{.status.podIP}}`}}:${MON_PORT} {{`{{end}}`}} {{`{{end}}`}}")
+    MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--addv {{`{{.spec.nodeName}}`}} [v2:{{`{{.status.podIP}}`}}:3300,v1:{{`{{.status.podIP}}`}}:6789] {{`{{end}}`}} {{`{{end}}`}}")
     (( remaining-- ))
     sleep 1
   done
