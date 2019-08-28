@@ -30,14 +30,6 @@ function get_mon_config {
   # Get fsid from ceph.conf
   local fsid=$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)
 
-  # If monmap exists and this mon is already there, don't overwrite monmap
-  if [ -f "${MONMAP}" ]; then
-      if monmaptool --print "${MONMAP}" | grep -q "${MON_IP// }"":${MON_PORT}"; then
-          echo "${MON_IP} already exists in monmap ${MONMAP}, continuing."
-          return
-      fi
-  fi
-
   remaining=$TIMEOUT
   MONMAP_ADD=""
 
