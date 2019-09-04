@@ -74,7 +74,7 @@ if [ ! -e "${MON_DATA_DIR}/keyring" ]; then
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" --mkfs -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
 else
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
-  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}:${MON_PORT}" || true
+  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}" || true
 fi
 
 # start MON
