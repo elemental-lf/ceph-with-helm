@@ -73,10 +73,6 @@ if [ ! -e "${MON_DATA_DIR}/keyring" ]; then
   # Prepare the monitor daemon's directory with the map and keyring
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" --mkfs -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
 else
-  echo "Trying to get the most recent monmap..."
-  # Ignore when we timeout, in most cases that means the cluster has no quorum or
-  # no mons are up and running yet
-  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon getmap -o ${MONMAP} || true
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
   timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}:${MON_PORT}" || true
 fi
