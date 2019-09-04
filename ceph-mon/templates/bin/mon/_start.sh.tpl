@@ -28,25 +28,36 @@ su -s /bin/sh -c "mkdir -p \"${MON_DATA_DIR}\"" ceph
 
 function get_mon_config {
   # Get fsid from ceph.conf
-  local fsid=$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)
+  local fsid="$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)"
 
   remaining=$TIMEOUT
-  MONMAP_ADD=""
+  while [[ ${remaining} > 0 ]]; do
+    # Get the ceph mon pods (name, IP and image) from the Kubernetes API. Formatted as a set of monmap params
+    MONMAP_ADD=''
+    while read -r line; do
+      NODE_NAME="$(cut -f1 <<<"$line")"
+      POD_IP="$(cut -f2 <<<"$line")"
+      IMAGE="$(cut -f3 <<<"$line")"
 
-  while [[ -z "${MONMAP_ADD// }" && "${remaining}" -gt 0 ]]; do
-    # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
-    MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--addv {{`{{.spec.nodeName}}`}} [v2:{{`{{.status.podIP}}`}}:3300,v1:{{`{{.status.podIP}}`}}:6789] {{`{{end}}`}} {{`{{end}}`}}")
+      if [[ $IMAGE =~ mimic|luminous ]]; then
+         MONMAP_ADD="$MONMAP_ADD --addv $NODE_NAME [v1:$POD_IP:6789]"
+      else
+         MONMAP_ADD="$MONMAP_ADD --addv $NODE_NAME [v2:$POD_IP:3300,v1:$POD_IP:6789]"
+      fi
+    done < <(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o jsonpath='{range .items[?(@.status.podIP)]}{.spec.nodeName}{"\t"}{.status.podIP}{"\t"}{.spec.containers[0].image}{"\n"}{end}')
+
+    [[ -n $MONMAP_ADD ]] && break
     (( remaining-- ))
     sleep 1
   done
 
-  if [[ -z "${MONMAP_ADD// }" ]]; then
+  if [[ -z ${MONMAP_ADD} ]]; then
       echo "ERROR- No ceph-mon pods found after ${TIMEOUT} seconds, exiting (namespace ${NAMESPACE}, KUBECTL_PARAM: ${KUBECTL_PARAM})."
       exit 1
   fi
 
   # Create a monmap with the Pod Names and IP
-  monmaptool --create ${MONMAP_ADD} --fsid ${fsid} ${MONMAP} --clobber
+  monmaptool --create ${MONMAP_ADD} --fsid ${fsid} "${MONMAP}" --clobber
 }
 
 get_mon_config
