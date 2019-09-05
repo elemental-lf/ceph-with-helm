@@ -22,44 +22,50 @@ MON_NAME=${NODE_NAME}
 MON_DATA_DIR="/var/lib/ceph/mon/${CLUSTER}-${MON_NAME}"
 MONMAP="/etc/ceph/monmap-${CLUSTER}"
 TIMEOUT=10
+# Set to 0 when any of the monitors are still Mimic or Luminous
+ALL_SUPPORT_V2=1
 
 # Make the monitor directory
 su -s /bin/sh -c "mkdir -p \"${MON_DATA_DIR}\"" ceph
 
 function get_mon_config {
   # Get fsid from ceph.conf
-  local fsid="$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)"
+  local -r fsid="$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)"
 
-  remaining=$TIMEOUT
+  local remaining=$TIMEOUT
   while [[ ${remaining} > 0 ]]; do
     # Get the ceph mon pods (name, IP and image) from the Kubernetes API. Formatted as a set of monmap params
-    MONMAP_ADD=''
+    local monmap_add_v1=''
+    local monmap_add_v1_v2=''
     while read -r line; do
-      NODE_NAME="$(cut -f1 <<<"$line")"
-      POD_IP="$(cut -f2 <<<"$line")"
-      IMAGE="$(cut -f3 <<<"$line")"
+      local node_name="$(cut -f1 <<<"$line")"
+      local pod_ip="$(cut -f2 <<<"$line")"
+      local image="$(cut -f3 <<<"$line")"
 
-      if [[ $IMAGE =~ mimic|luminous ]]; then
-         MONMAP_ADD="$MONMAP_ADD --addv $NODE_NAME [v1:$POD_IP:6789]"
-      else
-         MONMAP_ADD="$MONMAP_ADD --addv $NODE_NAME [v2:$POD_IP:3300,v1:$POD_IP:6789]"
-      fi
+      monmap_add_v1="$monmap_add_v1 --addv $node_name [v1:$pod_ip:6789]"
+      monmap_add_v1_v2="$monmap_add_v1_v2 --addv $node_name [v2:$pod_ip:3300,v1:$pod_ip:6789]"
+      [[ $image =~ mimic|luminous ]] && ALL_SUPPORT_V2=0
     done < <(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o jsonpath='{range .items[?(@.status.podIP)]}{.spec.nodeName}{"\t"}{.status.podIP}{"\t"}{.spec.containers[0].image}{"\n"}{end}')
 
-    [[ -n $MONMAP_ADD ]] && break
+    [[ -n $monmap_add_v1 ]] && break
     (( remaining-- ))
     sleep 1
   done
 
-  if [[ -z ${MONMAP_ADD} ]]; then
+  if [[ -z ${monmap_add_v1} ]]; then
       echo "ERROR- No ceph-mon pods found after ${TIMEOUT} seconds, exiting (namespace ${NAMESPACE}, KUBECTL_PARAM: ${KUBECTL_PARAM})."
       exit 1
   fi
 
   # Create a monmap with the Pod Names and IP
-  monmaptool --create ${MONMAP_ADD} --fsid ${fsid} "${MONMAP}" --clobber
+  if [[ $ALL_SUPPORT_V2 == 1 ]]; then
+    monmaptool --create ${monmap_add_v1_v2} --fsid ${fsid} "${MONMAP}" --clobber
+  else
+    monmaptool --create ${monmap_add_v1} --fsid ${fsid} "${MONMAP}" --clobber
+  fi
 }
 
+# Must be called for ALL_SUPPORT_V2 to be set correctly
 get_mon_config
 
 # If we don't have a monitor keyring, this is a new monitor
@@ -85,7 +91,12 @@ if [ ! -e "${MON_DATA_DIR}/keyring" ]; then
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" --mkfs -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
 else
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
-  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}" || true
+  if [[ $ALL_SUPPORT_V2 == 1 ]]; then
+    timeout $[$TIMEOUT * 2] ceph --cluster "${CLUSTER}" mon enable-msgr2 || true
+    timeout $[$TIMEOUT * 2] ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}" || true
+  else
+    timeout $[$TIMEOUT * 2] ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}:6789" || true
+  fi
 fi
 
 # start MON
