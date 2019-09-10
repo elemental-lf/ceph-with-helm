@@ -88,7 +88,7 @@ function manage_pool () {
 
 function wait_for_inactive_pgs () {
   # Loop until all pgs are active
-  while [[ `ceph --cluster ${CLUSTER} pg ls | tail -n +2 | grep -v "active+"` ]]
+  while [[ `ceph --cluster ${CLUSTER} pg ls | grep '^[[:digit:]]' | grep -v "active+"` ]]
   do
     sleep 3
   done

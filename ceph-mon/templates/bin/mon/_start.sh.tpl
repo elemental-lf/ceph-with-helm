@@ -22,41 +22,50 @@ MON_NAME=${NODE_NAME}
 MON_DATA_DIR="/var/lib/ceph/mon/${CLUSTER}-${MON_NAME}"
 MONMAP="/etc/ceph/monmap-${CLUSTER}"
 TIMEOUT=10
+# Set to 0 when any of the monitors are still Mimic or Luminous
+ALL_SUPPORT_V2=1
 
 # Make the monitor directory
 su -s /bin/sh -c "mkdir -p \"${MON_DATA_DIR}\"" ceph
 
 function get_mon_config {
   # Get fsid from ceph.conf
-  local fsid=$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)
+  local -r fsid="$(ceph-conf --lookup fsid -c /etc/ceph/${CLUSTER}.conf)"
 
-  # If monmap exists and this mon is already there, don't overwrite monmap
-  if [ -f "${MONMAP}" ]; then
-      if monmaptool --print "${MONMAP}" | grep -q "${MON_IP// }"":${MON_PORT}"; then
-          echo "${MON_IP} already exists in monmap ${MONMAP}, continuing."
-          return
-      fi
-  fi
+  local remaining=$TIMEOUT
+  while [[ ${remaining} > 0 ]]; do
+    # Get the ceph mon pods (name, IP and image) from the Kubernetes API. Formatted as a set of monmap params
+    local monmap_add_v1=''
+    local monmap_add_v1_v2=''
+    while read -r line; do
+      local node_name="$(cut -f1 <<<"$line")"
+      local pod_ip="$(cut -f2 <<<"$line")"
+      local image="$(cut -f3 <<<"$line")"
 
-  remaining=$TIMEOUT
-  MONMAP_ADD=""
+      monmap_add_v1="$monmap_add_v1 --addv $node_name [v1:$pod_ip:6789]"
+      monmap_add_v1_v2="$monmap_add_v1_v2 --addv $node_name [v2:$pod_ip:3300,v1:$pod_ip:6789]"
+      [[ $image =~ mimic|luminous ]] && ALL_SUPPORT_V2=0
+    done < <(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o jsonpath='{range .items[?(@.status.podIP)]}{.spec.nodeName}{"\t"}{.status.podIP}{"\t"}{.spec.containers[0].image}{"\n"}{end}')
 
-  while [[ -z "${MONMAP_ADD// }" && "${remaining}" -gt 0 ]]; do
-    # Get the ceph mon pods (name and IP) from the Kubernetes API. Formatted as a set of monmap params
-    MONMAP_ADD=$(kubectl get pods --namespace=${NAMESPACE} ${KUBECTL_PARAM} -o template --template="{{`{{range .items}}`}}{{`{{if .status.podIP}}`}}--add {{`{{.spec.nodeName}}`}} {{`{{.status.podIP}}`}}:${MON_PORT} {{`{{end}}`}} {{`{{end}}`}}")
+    [[ -n $monmap_add_v1 ]] && break
     (( remaining-- ))
     sleep 1
   done
 
-  if [[ -z "${MONMAP_ADD// }" ]]; then
+  if [[ -z ${monmap_add_v1} ]]; then
       echo "ERROR- No ceph-mon pods found after ${TIMEOUT} seconds, exiting (namespace ${NAMESPACE}, KUBECTL_PARAM: ${KUBECTL_PARAM})."
       exit 1
   fi
 
   # Create a monmap with the Pod Names and IP
-  monmaptool --create ${MONMAP_ADD} --fsid ${fsid} ${MONMAP} --clobber
+  if [[ $ALL_SUPPORT_V2 == 1 ]]; then
+    monmaptool --create ${monmap_add_v1_v2} --fsid ${fsid} "${MONMAP}" --clobber
+  else
+    monmaptool --create ${monmap_add_v1} --fsid ${fsid} "${MONMAP}" --clobber
+  fi
 }
 
+# Must be called for ALL_SUPPORT_V2 to be set correctly
 get_mon_config
 
 # If we don't have a monitor keyring, this is a new monitor
@@ -81,12 +90,13 @@ if [ ! -e "${MON_DATA_DIR}/keyring" ]; then
   # Prepare the monitor daemon's directory with the map and keyring
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" --mkfs -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
 else
-  echo "Trying to get the most recent monmap..."
-  # Ignore when we timeout, in most cases that means the cluster has no quorum or
-  # no mons are up and running yet
-  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon getmap -o ${MONMAP} || true
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
-  timeout $TIMEOUT ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}:${MON_PORT}" || true
+  if [[ $ALL_SUPPORT_V2 == 1 ]]; then
+    timeout $[$TIMEOUT * 2] ceph --cluster "${CLUSTER}" mon enable-msgr2 || true
+    timeout $[$TIMEOUT * 2] ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}" || true
+  else
+    timeout $[$TIMEOUT * 2] ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}:6789" || true
+  fi
 fi
 
 # start MON
@@ -97,4 +107,4 @@ exec /usr/bin/ceph-mon \
   -d \
   -i ${MON_NAME} \
   --mon-data "${MON_DATA_DIR}" \
-  --public-addr "${MON_IP}:${MON_PORT}"
+  --public-addr "${MON_IP}"

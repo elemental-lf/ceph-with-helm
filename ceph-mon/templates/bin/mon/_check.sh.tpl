@@ -17,42 +17,44 @@ limitations under the License.
 */}}
 
 set -ex
+export LC_ALL=C
+
+SOCKDIR=${CEPH_SOCKET_DIR:-/run/ceph}
+SBASE=${CEPH_OSD_SOCKET_BASE:-${CLUSTER}-mon}
+SSUFFIX=${CEPH_SOCKET_SUFFIX:-asok}
+
 COMMAND="${@:-liveness}"
 
+function extract_state () {
+    python -c 'import json; import sys; input = json.load(sys.stdin); print(input["state"]);' 2>/dev/null
+}
+
 function heath_check () {
-  SOCKDIR=${CEPH_SOCKET_DIR:-/run/ceph}
-  SBASE=${CEPH_OSD_SOCKET_BASE:-ceph-mon}
-  SSUFFIX=${CEPH_SOCKET_SUFFIX:-asok}
+  local -r mon_live_states="$1"
+  local -r sock="$SOCKDIR/$SBASE.$NODE_NAME.$SSUFFIX"
+  [[ ! -S $sock ]] && exit 1
 
-  MON_ID=$(ps auwwx | grep ceph-mon | grep -v "$1" | grep -v grep | sed 's/.*-i\ //;s/\ .*//'|awk '{print $1}')
+  local -r current_state=$(ceph -f json-pretty --connect-timeout 1 --admin-daemon "$sock" mon_status | extract_state)
+  [[ -z ${current_state} ]] && exit 1
 
-  if [ -z "${MON_ID}" ]; then
-    MON_NAME=${NODE_NAME}
-  fi
-
-  if [ -S "${SOCKDIR}/${SBASE}.${MON_NAME}.${SSUFFIX}" ]; then
-   MON_STATE=$(ceph -f json-pretty --connect-timeout 1 --admin-daemon "${sock}" mon_status|grep state|sed 's/.*://;s/[^a-z]//g')
-   echo "MON ${MON_ID} ${MON_STATE}";
-   # this might be a stricter check than we actually want.  what are the
-   # other values for the "state" field?
-   for S in ${MON_LIVE_STATE}; do
-    if [ "x${MON_STATE}x" = "x${S}x" ]; then
-     exit 0
+  exit_code=1
+  # This might be a stricter check than we actually want. What are the other values for the "state" field?
+  for state in ${mon_live_states}; do
+    if [[ ${current_state} == ${state} ]]; then
+      exit_code=0
+      break
     fi
-   done
-  fi
-  # if we made it this far, things are not running
-  exit 1
+  done
+
+  exit $exit_code
 }
 
 function liveness () {
-  MON_LIVE_STATE="probing electing synchronizing leader peon"
-  heath_check
+  heath_check "probing electing synchronizing leader peon"
 }
 
 function readiness () {
-  MON_LIVE_STATE="leader peon"
-  heath_check
+  heath_check "leader peon"
 }
 
 $COMMAND

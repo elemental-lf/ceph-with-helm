@@ -30,17 +30,18 @@ images:
   pull_policy: IfNotPresent
   tags:
     # See https://github.com/ceph/ceph-container for tags
-    ceph_bootstrap:          'docker.io/ceph/daemon:v3.2.5-stable-3.2-mimic-centos-7-x86_64'
-    ceph_mon:                'docker.io/ceph/daemon:v3.2.5-stable-3.2-mimic-centos-7-x86_64'
-    ceph_osd:                'docker.io/ceph/daemon:v3.2.5-stable-3.2-mimic-centos-7-x86_64'
-    ceph_mgr:                'docker.io/ceph/daemon:v3.2.5-stable-3.2-mimic-centos-7-x86_64'
-    ceph_mds:                'docker.io/ceph/daemon:v3.2.5-stable-3.2-mimic-centos-7-x86_64'
-    ceph_rgw:                'docker.io/ceph/daemon:v3.2.5-stable-3.2-mimic-centos-7-x86_64'
+    ceph_bootstrap:          'docker.io/ceph/daemon:v4.0.3-stable-4.0-nautilus-centos-7-x86_64'
+    ceph_mon:                'docker.io/ceph/daemon:v4.0.3-stable-4.0-nautilus-centos-7-x86_64'
+    ceph_osd:                'docker.io/ceph/daemon:v4.0.3-stable-4.0-nautilus-centos-7-x86_64'
+    ceph_mgr:                'docker.io/ceph/daemon:v4.0.3-stable-4.0-nautilus-centos-7-x86_64'
+    ceph_mds:                'docker.io/ceph/daemon:v4.0.3-stable-4.0-nautilus-centos-7-x86_64'
+    ceph_rgw:                'docker.io/ceph/daemon:v4.0.3-stable-4.0-nautilus-centos-7-x86_64'
+    #
     ceph_cephfs_provisioner: 'docker.io/elementalnet/cephfs-provisioner:0.2.0'
     ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.2.0'
     #
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
-    ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:3.2.5-mimic-k8s-1.15.2-rev-1'
+    ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:4.0.3-nautilus-k8s-1.15.3-rev-1'
     ceph_osd_operator: 'docker.io/elementalnet/ceph-osd-operator:9acf142'
   local_registry:
     active: false
@@ -455,11 +456,11 @@ conf:
             caps mon = "allow profile bootstrap-rbd"
   ceph:
     global:
-      # auth
-      cephx: true
-      cephx_require_signatures: false
       cephx_cluster_require_signatures: true
-      cephx_service_require_signatures: false
+      # This disables a warning which is generated for OSDs which were created before Nautilus.
+      # Some statistics related to BlueStore metadata and data usage will probably be wrong.
+      bluestore_warn_on_legacy_statfs: false
+      osd_pool_default_pg_autoscale_mode: "off"
     osd:
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
@@ -711,6 +712,7 @@ ceph_mgr_enabled_modules:
   - prometheus
   - balancer
   - iostat
+  - rbd_support
 
 # You can configure your mgr modules
 # below. Each module has its own set
@@ -740,7 +742,10 @@ endpoints:
       default: null
     port:
       mon:
+        # Don't change these ports. They need to be set to the official values, so that automatic discovery of the
+        # messaging protocol works.
         default: 6789
+        v2: 3300
   ceph_mgr:
     namespace: null
     hosts:

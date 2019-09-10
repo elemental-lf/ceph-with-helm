@@ -141,6 +141,7 @@ spec:
                     - /tmp/mon-stop.sh
           ports:
             - containerPort: {{ tuple "ceph_mon" "internal" "mon" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+            - containerPort: {{ tuple "ceph_mon" "v2" "mon" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
           livenessProbe:
            exec:
             command:
