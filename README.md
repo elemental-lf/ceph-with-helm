@@ -41,4 +41,13 @@ at the time of writing (30/08/2019):
       this will start shuffling some data around. If this is not desired I suggest to set
       `ceph_mgr_modules_config.balancer.active` to `0`. This disables automatic balancing.
     * Changing S3 admin key and secret via `values.yaml` is now supported. (Also ported from `openstack-helm-infra`.)
-* `milestone-3` (unreleased): This version will contain the update from Mimic to Nautilus.
+* `milestone-3`: This is a major update and brings Ceph to version 14.2.2.
+    * Updates `ceph-container` to 4.0.3 which includes Ceph 14.2.2.
+    * Health check scripts are rewritten (includes an important bug fix to the mon check script)
+    * Fixed probably endless loop in wait_for_inactive_pgs due to changed `ceph pg ls` output.
+    * Enabled messenger v2 protocol for all components
+    * Updated locking logic for OSD block devices, Nautilus does the locking internally now
+    * Updated `ceph-config-helper` image: Ceph to 14.2.2 and `kubectl` to 1.15.3
+  
+  **Remember to execute `osd require-osd-release nautilus` after the upgrade is complete and you're confident that you
+    don't want to go back.**
