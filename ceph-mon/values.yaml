@@ -42,7 +42,7 @@ images:
     #
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:4.0.3-nautilus-k8s-1.15.3-rev-1'
-    ceph_osd_operator: 'docker.io/elementalnet/ceph-osd-operator:9acf142'
+    ceph_osd_operator: 'docker.io/elementalnet/ceph-osd-operator:0.2.0'
   local_registry:
     active: false
     exclude: []
@@ -152,9 +152,14 @@ pod:
         # This is the user ansible-operator inside of the container.
         runAsUser: 1001
       container:
-        operator:
+        ansible:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
+        operator:
+          allowPrivilegeEscalation: false
+          # The image writes to /etc/passwd :(
+          # See https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
+          readOnlyRootFilesystem: false
 
     # ceph-client
     mds:
@@ -321,6 +326,20 @@ pod:
       limits:
         memory: "1024Mi"
         cpu: "1000m"
+    osd_operator_ansible:
+      requests:
+        memory: "5Mi"
+        cpu: "250m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
+    osd_operator_operator:
+      requests:
+        memory: "5Mi"
+        cpu: "250m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
     mds:
       requests:
         memory: "10Mi"

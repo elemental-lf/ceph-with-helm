@@ -8,21 +8,61 @@ kind: Role
 metadata:
   name: {{ $serviceAccountName }}
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - "*"
-- apiGroups:
-  - ceph.elemental.net
-  resources:
-  - '*'
-  verbs:
-  - watch
-  - get
-  - list
-  - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - services/finalizers
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      - configmaps
+      - secrets
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs:
+      - '*'
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - get
+      - create
+  - apiGroups:
+      - apps
+    resourceNames:
+      - ceph-osd-operator
+    resources:
+      - deployments/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+  - apiGroups:
+      - ceph.elemental.net
+    resources:
+      - '*'
+    verbs:
+      - '*'
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -43,7 +83,7 @@ metadata:
   labels:
 {{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
 {{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
@@ -60,9 +100,20 @@ spec:
       initContainers:
 {{ tuple $envAll "osd-maint" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
+        - name: ansible
+{{ tuple $envAll "ceph_osd_operator" | include "helm-toolkit.snippets.image" | indent 10 }}
+{{ tuple $envAll $envAll.Values.pod.resources.osd_operator_ansible | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "osd_operator" "container" "ansible" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+          command:
+            - /usr/local/bin/ao-logs
+            - /tmp/ansible-operator/runner
+            - stdout
+          volumeMounts:
+          - mountPath: /tmp
+            name: pod-tmp
         - name: operator
 {{ tuple $envAll "ceph_osd_operator" | include "helm-toolkit.snippets.image" | indent 10 }}
-{{ tuple $envAll $envAll.Values.pod.resources.osd_operator | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ tuple $envAll $envAll.Values.pod.resources.osd_operator_operator | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
 {{ dict "envAll" $envAll "application" "osd_operator" "container" "operator" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           ports:
           - containerPort: 60000
@@ -72,9 +123,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "ceph-osd-operator"
           volumeMounts:
+            # NB: The operator container currently is configured with a writable root. See values.yaml, security contexts.
             - name: pod-tmp
               mountPath: /tmp
             - name: pod-run
@@ -93,4 +149,13 @@ spec:
         - name: pod-run
           emptyDir:
            medium: "Memory"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+{{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 20 }}
 {{- end }}
