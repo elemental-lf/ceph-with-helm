@@ -79,6 +79,7 @@ labels:
 tolerations:
   mon: []
   mgr: []
+  osd_operator: []
   provisioner: []
 
 pod:

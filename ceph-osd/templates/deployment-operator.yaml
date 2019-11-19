@@ -96,6 +96,10 @@ spec:
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.osd_operator.node_selector_key }}: {{ .Values.labels.osd_operator.node_selector_value }}
+    {{- if .Values.tolerations.osd_operator }}
+      tolerations:
+{{ toYaml .Values.tolerations.osd_operator | indent 8 }}
+    {{- end }}
       dnsPolicy: {{ .Values.pod.dns_policy }}
       initContainers:
 {{ tuple $envAll "osd-maint" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
