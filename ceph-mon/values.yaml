@@ -432,7 +432,7 @@ network:
       public: false
       classes:
         namespace: "nginx"
-        cluster: "nginx-cluster"
+        cluster: "nginx"
       annotations:
         nginx.ingress.kubernetes.io/proxy-body-size: "0"
         nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "0"
@@ -816,13 +816,6 @@ endpoints:
   ceph_object_store:
     name: ceph-rgw
     namespace: null
-    auth:
-      admin:
-        # NOTE(srwilkers): These defaults should be used for testing only, and
-        # should be changed before deploying to production
-        username: s3_admin
-        access_key: "32AGKHCIG3FZ62IY1MEC"
-        secret_key: "22S9iCLHcHId9AzAQD32O8jrq7DpFX9RHIOOC4NL"
     hosts:
       default: ceph-rgw
       public: ceph-rgw
