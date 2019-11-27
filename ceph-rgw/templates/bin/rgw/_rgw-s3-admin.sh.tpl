@@ -21,7 +21,8 @@ set -ex
 function create_admin_user () {
   radosgw-admin user create \
     --uid=${S3_ADMIN_USERNAME} \
-    --display-name=${S3_ADMIN_USERNAME}
+    --display-name=${S3_ADMIN_USERNAME} \
+    --system
 
   radosgw-admin caps add \
       --uid=${S3_ADMIN_USERNAME} \

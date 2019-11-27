@@ -26,36 +26,6 @@ if [ ! -e "$MGR_KEYRING" ]; then
     chmod 600 "$MGR_KEYRING"
 fi
 
-echo "SUCCESS"
-
-ceph --cluster "${CLUSTER}" -v
-
-# Env. variables matching the pattern "<module>_" will be
-# found and parsed for config-key settings by
-#  ceph config set mgr mgr/<module>/<key> <value> --force
-MODULES_TO_DISABLE=`ceph mgr dump | python -c "import json, sys; print ' '.join(json.load(sys.stdin)['modules'])"`
-
-for module in ${ENABLED_MODULES}; do
-    # This module may have been enabled in the past
-    # remove it from the disable list if present
-    MODULES_TO_DISABLE=${MODULES_TO_DISABLE/$module/}
-
-    options=`env | grep ^${module}_ || true`
-    for option in ${options}; do
-        #strip module name
-        option=${option/${module}_/}
-        key=`echo $option | cut -d= -f1`
-        value=`echo $option | cut -d= -f2`
-        ceph --cluster "${CLUSTER}" config set mgr mgr/$module/$key $value --force
-    done
-    ceph --cluster "${CLUSTER}" mgr module enable ${module} --force
-done
-
-for module in $MODULES_TO_DISABLE; do
-  ceph --cluster "${CLUSTER}" mgr module disable ${module}
-done
-
-echo "SUCCESS"
 # start ceph-mgr
 exec /usr/bin/ceph-mgr \
   --cluster "${CLUSTER}" \

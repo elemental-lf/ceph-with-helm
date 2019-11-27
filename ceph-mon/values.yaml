@@ -183,6 +183,13 @@ pod:
         mgr:
           runAsUser: 0
           readOnlyRootFilesystem: true
+    mgr_init:
+      pod:
+        runAsUser: 65534
+      container:
+        mgr_init:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
     rbd_pool:
       pod:
         runAsUser: 65534
@@ -433,6 +440,19 @@ network:
     node_port:
       enabled: false
       port: 30004
+  mgr_dashboard:
+    ingress:
+      public: false
+      classes:
+        namespace: "nginx"
+        cluster: "nginx"
+      annotations:
+        # A standby MGR will return 503 with 14.2.5 and above and our configurationn.
+        nginx.ingress.kubernetes.io/proxy-next-upstream: "error timeout http_503"
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: 30005
 
 conf:
   features:
@@ -607,7 +627,14 @@ conf:
         percent_total_data: 34.8
   rgw_s3:
     enabled: false
-    admin_caps: "users=*;buckets=*;zone=*"
+    auth:
+      admin:
+        # NOTE(srwilkers): These defaults should be used for testing only, and
+        # should be changed before deploying to production
+        username: s3_admin
+        access_key: "32AGKHCIG3FZ62IY1MEC"
+        secret_key: "22S9iCLHcHId9AzAQD32O8jrq7DpFX9RHIOOC4NL"
+        caps: "users=*;buckets=*;zone=*"
   storageclasses:
     # TODO: While it is possible to define further storage classes here, the creation of RBD client keys is still
     # TODO: hardcoded to the storage class name "rbd" and is not done for other RBD backed storage classes.
@@ -643,6 +670,37 @@ conf:
         adminSecretName: pvc-ceph-conf-combined-storageclass
         adminSecretNamespace: ceph
         #user_secret_name: pvc-ceph-cephfs-client-key
+  mgr:
+    # For a list of available modules: http://docs.ceph.com/docs/master/mgr/
+    # Any module not listed here will be disabled.
+    modules:
+      - status
+      - prometheus
+      - balancer
+      - iostat
+      - rbd_support
+      - dashboard
+    # You can configure your mgr modules below. Each module has its own set of key/value. Refer to the doc
+    # above for more info.
+    config:
+      #  Don't setup web service configuration options for the dashboard here.
+      balancer:
+        active: 1
+        mode: crush-compat
+    dashboard:
+      features:
+        - cephfs
+        - iscsi
+        - mirroring
+        - rbd
+        - rgw
+      users:
+        - username: admin
+          password: secret
+          role: administrator
+        - username: ro
+          password: secret
+          role: read-only
 
 dependencies:
   static:
@@ -708,6 +766,10 @@ dependencies:
       services:
         - endpoint: internal
           service: ceph_mon
+    mgr_init:
+      services:
+        - endpoint: internal
+          service: ceph_mgr
     rbd_provisioner:
       jobs:
         - labels:
@@ -720,36 +782,6 @@ dependencies:
       services:
         - endpoint: internal
           service: ceph_object_store
-
-# Uncomment below to enable mgr modules
-# For a list of available modules:
-#  http://docs.ceph.com/docs/master/mgr/
-# This overrides mgr_initial_modules (default: restful, status)
-# Any module not listed here will be disabled
-ceph_mgr_enabled_modules:
-  - restful
-  - status
-  - prometheus
-  - balancer
-  - iostat
-  - rbd_support
-
-# You can configure your mgr modules
-# below. Each module has its own set
-# of key/value. Refer to the doc
-# above for more info. For example:
-ceph_mgr_modules_config:
-  balancer:
-    active: 1
-    mode: crush-compat
-#  dashboard:
-#    port: 7000
-#  localpool:
-#    failure_domain: host
-#    subtree: rack
-#    pg_num: "128"
-#    num_rep: "3"
-#    min_size: "2"
 
 endpoints:
   cluster_domain_suffix: cluster.local
@@ -777,6 +809,8 @@ endpoints:
         default: 7000
       metrics:
         default: 9283
+      dashboard:
+        default: 8080
     scheme:
       default: http
   ceph_object_store:
@@ -840,7 +874,9 @@ manifests:
   deployment_mgr: true
   job_cephfs_client_key: true
   job_rbd_pool: true
+  job_mgr_init: true
   service_mgr: true
+  ingress_mgr_dashboard: true
   # ceph-provisioners
   configmap_provisioners_bin: true
   deployment_rbd_provisioner: true

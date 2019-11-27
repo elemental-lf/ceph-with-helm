@@ -37,5 +37,7 @@ data:
 {{ tuple "bin/mgr/_start.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   mgr-check.sh: |
 {{ tuple "bin/mgr/_check.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  mgr-init.sh: |
+{{ tuple "bin/mgr/_init.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 
 {{- end }}
