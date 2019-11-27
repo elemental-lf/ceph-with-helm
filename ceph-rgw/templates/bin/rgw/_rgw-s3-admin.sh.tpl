@@ -26,7 +26,7 @@ function create_admin_user () {
 
   radosgw-admin caps add \
       --uid=${S3_ADMIN_USERNAME} \
-      --caps={{ .Values.conf.rgw_s3.admin_caps | quote }}
+      --caps={{ .Values.conf.rgw_s3.auth.admin.caps | quote }}
 
   radosgw-admin key create \
     --uid=${S3_ADMIN_USERNAME} \
