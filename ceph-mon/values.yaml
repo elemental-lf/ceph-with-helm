@@ -37,8 +37,8 @@ images:
     ceph_mds:                'docker.io/ceph/daemon:v4.0.4-stable-4.0-nautilus-centos-7-x86_64'
     ceph_rgw:                'docker.io/ceph/daemon:v4.0.4-stable-4.0-nautilus-centos-7-x86_64'
     #
-    ceph_cephfs_provisioner: 'docker.io/elementalnet/cephfs-provisioner:0.2.0'
-    ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.2.0'
+    ceph_cephfs_provisioner: 'docker.io/elementalnet/cephfs-provisioner:0.3.0'
+    ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.3.0'
     #
     dep_check: 'quay.io/stackanetes/kubernetes-entrypoint:v0.3.1'
     ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:4.0.4-nautilus-k8s-1.15.5-rev-1'
