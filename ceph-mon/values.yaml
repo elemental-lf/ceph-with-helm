@@ -422,6 +422,9 @@ secrets:
     ceph_object_store:
       api:
         public: ceph-tls-public
+    ceph_mgr:
+      mgr_dashboard:
+        public: ceph-tls-mgr-dashboard
 
 network:
   public: 192.168.0.0/16
@@ -447,7 +450,7 @@ network:
         namespace: "nginx"
         cluster: "nginx"
       annotations:
-        # A standby MGR will return 503 with 14.2.5 and above and our configurationn.
+        # A standby MGR will return 503 with 14.2.5 (and above) and our configuration.
         nginx.ingress.kubernetes.io/proxy-next-upstream: "error timeout http_503"
     external_policy_local: false
     node_port:
@@ -802,6 +805,7 @@ endpoints:
     namespace: null
     hosts:
       default: ceph-mgr
+      public: ceph-mgr
     host_fqdn_override:
       default: null
     port:
@@ -870,6 +874,7 @@ manifests:
   job_mgr_init: true
   service_mgr: true
   ingress_mgr_dashboard: true
+  secret_ingress_tls_mgr_dashboard: true
   # ceph-provisioners
   configmap_provisioners_bin: true
   deployment_rbd_provisioner: true
