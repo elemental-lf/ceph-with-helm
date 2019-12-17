@@ -30,7 +30,7 @@ spec:
 {{ dict "envAll" $envAll "application" "osd" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
-        {{ .Values.labels.osd.node_selector_key }}: {{ .Values.labels.osd.node_selector_value }}
+        {{ .Values.labels.osd.node_selector_key }}: {{ .Values.labels.osd.node_selector_value | quote }}
       hostNetwork: true
       hostPID: true
       dnsPolicy: {{ .Values.pod.dns_policy }}

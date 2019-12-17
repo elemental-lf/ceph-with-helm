@@ -68,7 +68,7 @@ spec:
 {{ dict "envAll" $envAll "application" "mon" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
-        {{ .Values.labels.mon.node_selector_key }}: {{ .Values.labels.mon.node_selector_value }}
+        {{ .Values.labels.mon.node_selector_key }}: {{ .Values.labels.mon.node_selector_value | quote }}
     {{- if .Values.tolerations.mon }}
       tolerations:
 {{ toYaml .Values.tolerations.mon | indent 8 }}

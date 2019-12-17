@@ -45,7 +45,7 @@ spec:
       affinity:
 {{ tuple $envAll "ceph" "moncheck" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
-        {{ .Values.labels.mon.node_selector_key }}: {{ .Values.labels.mon.node_selector_value }}
+        {{ .Values.labels.mon.node_selector_key }}: {{ .Values.labels.mon.node_selector_value | quote }}
     {{- if .Values.tolerations.mon }}
       tolerations:
 {{ toYaml .Values.tolerations.mon | indent 8 }}

@@ -45,7 +45,7 @@ spec:
       affinity:
 {{ tuple $envAll "ceph" "mds" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
-        {{ .Values.labels.mds.node_selector_key }}: {{ .Values.labels.mds.node_selector_value }}
+        {{ .Values.labels.mds.node_selector_key }}: {{ .Values.labels.mds.node_selector_value | quote }}
       hostNetwork: true
       dnsPolicy: {{ .Values.pod.dns_policy }}
       initContainers:

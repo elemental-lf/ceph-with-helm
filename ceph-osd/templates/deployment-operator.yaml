@@ -95,7 +95,7 @@ spec:
 {{ dict "envAll" $envAll "application" "osd_operator" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
-        {{ .Values.labels.osd_operator.node_selector_key }}: {{ .Values.labels.osd_operator.node_selector_value }}
+        {{ .Values.labels.osd_operator.node_selector_key }}: {{ .Values.labels.osd_operator.node_selector_value | quote }}
     {{- if .Values.tolerations.osd_operator }}
       tolerations:
 {{ toYaml .Values.tolerations.osd_operator | indent 8 }}
