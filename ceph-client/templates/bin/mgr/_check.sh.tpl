@@ -25,14 +25,17 @@ function extract_osd_epoch () {
     python -c 'import json; import sys; input = json.load(sys.stdin); print(input["osd_epoch"]);' 2>/dev/null
 }
 
-function liveness () {
+function health_check () {
    local -r current_osd_epoch="$(ceph --cluster "${CLUSTER}" daemon mgr.$(hostname) --connect-timeout 1 -f json status | extract_osd_epoch)"
    [[ -n ${current_osd_epoch} ]] && exit 0 || exit 1
 }
 
+function liveness () {
+  health_check
+}
+
 function readiness () {
-  local -r active_mgr="$(timeout 10 ceph --cluster "${CLUSTER}" mgr dump -f json | jq -r .active_name)"
-  [[ $active_mgr == $(hostname) ]] && exit 0 || exit 1
+  health_check
 }
 
 $COMMAND
