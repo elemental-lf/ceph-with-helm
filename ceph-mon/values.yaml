@@ -504,6 +504,7 @@ conf:
       # Some statistics related to BlueStore metadata and data usage will probably be wrong.
       bluestore_warn_on_legacy_statfs: false
       osd_pool_default_pg_autoscale_mode: "off"
+      device_failure_prediction_mode: local
     osd:
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
@@ -683,6 +684,7 @@ conf:
       - iostat
       - rbd_support
       - dashboard
+      - diskprediction_local
     # You can configure your mgr modules below. Each module has its own set of key/value. Refer to the doc
     # above for more info.
     config:
@@ -690,6 +692,9 @@ conf:
       balancer:
         active: 1
         mode: crush-compat
+      devicehealth:
+        enable_monitoring: true
+        self_heal: false
     dashboard:
       features:
         - cephfs
