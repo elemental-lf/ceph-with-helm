@@ -3,6 +3,12 @@
 {{- $serviceAccountName := "ceph-osd-operator"}}
 {{ tuple . "osd-operator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ $serviceAccountName }}
+value: 1000000000
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -101,6 +107,7 @@ spec:
 {{ toYaml .Values.tolerations.osd_operator | indent 8 }}
     {{- end }}
       dnsPolicy: {{ .Values.pod.dns_policy }}
+      priorityClassName: {{ $serviceAccountName }}
       initContainers:
 {{ tuple $envAll "osd-maint" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
