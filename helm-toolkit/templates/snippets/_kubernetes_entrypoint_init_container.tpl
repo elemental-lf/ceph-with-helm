@@ -21,7 +21,7 @@ abstract: |
 values: |
   images:
     tags:
-      dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
+      dep_check: quay.io/airshipit/kubernetes-entrypoint:v1.0.0
     pull_policy: IfNotPresent
     local_registry:
       active: true
@@ -41,6 +41,13 @@ values: |
         services:
           - endpoint: internal
             service: etcd
+        custom_resources:
+          - apiVersion: argoproj.io/v1alpha1
+            kind: Workflow
+            name: wf-example
+            fields:
+              - key: "status.phase"
+                value: "Succeeded"
   endpoints:
     local_image_registry:
       namespace: docker-registry
@@ -50,12 +57,34 @@ values: |
     etcd:
       hosts:
         default: etcd
+  # NOTE (portdirect): if the stanza, or a portion of it, under `pod` is not
+  # specififed then the following will be used as defaults:
+  #  pod:
+  #    security_context:
+  #      kubernetes_entrypoint:
+  #        container:
+  #          kubernetes_entrypoint:
+  #            runAsUser: 65534
+  #            readOnlyRootFilesystem: true
+  #            allowPrivilegeEscalation: false
+  pod:
+    security_context:
+      kubernetes_entrypoint:
+        container:
+          kubernetes_entrypoint:
+            runAsUser: 0
+            readOnlyRootFilesystem: false
 usage: |
   {{ tuple . "calico_node" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" }}
 return: |
-  - name: kubernetes-entrypoint
-    image: "quay.io/stackanetes/kubernetes-entrypoint:v0.3.1"
+  - name: init
+    image: "quay.io/airshipit/kubernetes-entrypoint:v1.0.0"
     imagePullPolicy: IfNotPresent
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      runAsUser: 0
+
     env:
       - name: POD_NAME
         valueFrom:
@@ -81,13 +110,25 @@ return: |
         value: ""
       - name: DEPENDENCY_POD_JSON
         value: ""
-      - name: COMMAND
-        value: "echo done"
+      - name: DEPENDENCY_CUSTOM_RESOURCE
+        value: "[{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Workflow\",\"namespace\":\"default\",\"name\":\"wf-example\",\"fields\":[{\"key\":\"status.phase\",\"value\":\"Succeeded\"}]}]"
     command:
       - kubernetes-entrypoint
     volumeMounts:
       []
 */}}
+
+{{- define "helm-toolkit.snippets.kubernetes_entrypoint_init_container._default_security_context" -}}
+Values:
+  pod:
+    security_context:
+      kubernetes_entrypoint:
+        container:
+          kubernetes_entrypoint:
+            runAsUser: 65534
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+{{- end -}}
 
 {{- define "helm-toolkit.snippets.kubernetes_entrypoint_init_container" -}}
 {{- $envAll := index . 0 -}}
@@ -110,9 +151,14 @@ return: |
 {{- end -}}
 {{- end -}}
 {{- $deps := $envAll.Values.__kubernetes_entrypoint_init_container.deps }}
-
+{{- range $deps.custom_resources }}
+{{- $_ := set . "namespace" $envAll.Release.Namespace -}}
+{{- end -}}
+{{- $default_security_context := include "helm-toolkit.snippets.kubernetes_entrypoint_init_container._default_security_context" . | fromYaml }}
+{{- $patchedEnvAll := mergeOverwrite $default_security_context $envAll }}
 - name: kubernetes-entrypoint
 {{ tuple $envAll "dep_check" | include "helm-toolkit.snippets.image" | indent 2 }}
+{{- dict "envAll" $patchedEnvAll "application" "kubernetes_entrypoint" "container" "kubernetes_entrypoint" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 2 }}
   env:
     - name: POD_NAME
       valueFrom:
@@ -145,8 +191,8 @@ return: |
       value: "{{ include "helm-toolkit.utils.joinListWithComma" $deps.container }}"
     - name: DEPENDENCY_POD_JSON
       value: {{ if $deps.pod }}{{ toJson $deps.pod | quote }}{{ else }}""{{ end }}
-    - name: COMMAND
-      value: "echo done"
+    - name: DEPENDENCY_CUSTOM_RESOURCE
+      value: {{ if $deps.custom_resources }}{{ toJson $deps.custom_resources | quote }}{{ else }}""{{ end }}
   command:
     - kubernetes-entrypoint
   volumeMounts:
