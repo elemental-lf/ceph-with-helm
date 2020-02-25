@@ -18,4 +18,4 @@ limitations under the License.
 
 set -ex
 
-exec /usr/local/bin/rbd-provisioner
+exec /usr/local/bin/rbd-provisioner "$@"

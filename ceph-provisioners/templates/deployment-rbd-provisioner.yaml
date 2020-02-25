@@ -182,6 +182,8 @@ spec:
                   fieldPath: metadata.name
           command:
             - /tmp/provisioner-rbd-start.sh
+          args:
+            - "--command-timeout={{ .Values.conf.rbd_provisioner.command_timeout }}"
           volumeMounts:
             - name: pod-tmp
               mountPath: /tmp

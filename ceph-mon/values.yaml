@@ -513,6 +513,9 @@ conf:
       ms_bind_port_max: 7300
   cephfs_provisioner:
     use_pvc_namespace_for_secrets: true
+  rbd_provisioner:
+    # Especially rbd rm might take longer for larger images.
+    command_timeout: 600 # in seconds
   storage:
     mon:
       directory: /var/lib/openstack-helm/ceph/mon
