@@ -68,24 +68,24 @@ function get_mon_config {
 # Must be called for ALL_SUPPORT_V2 to be set correctly
 get_mon_config
 
+if [ ! -e ${MON_KEYRING}.seed ]; then
+  echo "ERROR- ${MON_KEYRING}.seed must exist. You can extract it from your current monitor by running 'ceph auth get mon. -o ${MON_KEYRING}' or use a KV Store"
+  exit 1
+else
+  cp -vf ${MON_KEYRING}.seed ${MON_KEYRING}
+fi
+
+# Import all other keys into the keyring
+for KEYRING in ${OSD_BOOTSTRAP_KEYRING} ${MDS_BOOTSTRAP_KEYRING} ${RGW_BOOTSTRAP_KEYRING} ${RBD_MIRROR_BOOTSTRAP_KEYRING} ${ADMIN_KEYRING}; do
+  ceph-authtool ${MON_KEYRING} --import-keyring ${KEYRING}
+done
+
 # If we don't have a monitor keyring, this is a new monitor
 if [ ! -e "${MON_DATA_DIR}/keyring" ]; then
-  if [ ! -e ${MON_KEYRING}.seed ]; then
-    echo "ERROR- ${MON_KEYRING}.seed must exist. You can extract it from your current monitor by running 'ceph auth get mon. -o ${MON_KEYRING}' or use a KV Store"
-    exit 1
-  else
-    cp -vf ${MON_KEYRING}.seed ${MON_KEYRING}
-  fi
-
   if [ ! -e ${MONMAP} ]; then
     echo "ERROR- ${MONMAP} must exist. You can extract it from your current monitor by running 'ceph mon getmap -o ${MONMAP}' or use a KV Store"
     exit 1
   fi
-
-  # Testing if it's not the first monitor, if one key doesn't exist we assume none of them exist
-  for KEYRING in ${OSD_BOOTSTRAP_KEYRING} ${MDS_BOOTSTRAP_KEYRING} ${RGW_BOOTSTRAP_KEYRING} ${RBD_MIRROR_BOOTSTRAP_KEYRING} ${ADMIN_KEYRING}; do
-    ceph-authtool ${MON_KEYRING} --import-keyring ${KEYRING}
-  done
 
   # Prepare the monitor daemon's directory with the map and keyring
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" --mkfs -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
