@@ -1,7 +1,7 @@
-FROM docker.io/ceph/daemon-base:v4.0.4-stable-4.0-nautilus-centos-7-x86_64
+FROM docker.io/ceph/daemon-base:v4.0.10-stable-4.0-nautilus-centos-7-x86_64
 MAINTAINER lf@elemental.net
 
-ARG KUBECTL_VERSION=v1.15.5
+ARG KUBECTL_VERSION=v1.17.3
 
 RUN set -ex;\
     yum install -y jq python2-pip; \
