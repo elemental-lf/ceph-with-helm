@@ -517,6 +517,9 @@ conf:
     # Especially rbd rm might take longer for larger images.
     command_timeout: 600 # in seconds
   storage:
+    # This configures the directory to bind mount as the device hierarchy inside of the OSD container. Outside of
+    # certain special requirements this should always be /dev.
+    dev_path: /dev
     mon:
       directory: /var/lib/openstack-helm/ceph/mon
     osd: []

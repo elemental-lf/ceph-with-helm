@@ -51,6 +51,9 @@ if [ ! -b "${OSD_DEVICE}" ]; then
   exit 1
 fi
 
+# ensure that all LVM2 symbolic links are present
+vgscan --mknodes
+
 # watch the udev event queue, and exit if all current events are handled
 udevadm settle --timeout=600
 
