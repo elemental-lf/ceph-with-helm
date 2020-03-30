@@ -70,10 +70,10 @@ ceph --cluster "${CLUSTER}" dashboard set-rgw-api-port '{{ tuple "ceph_object_st
 {{- if .Values.conf.mgr.dashboard.users }}
   {{- range $user := .Values.conf.mgr.dashboard.users }}
     if ceph --cluster "${CLUSTER}" dashboard ac-user-show '{{ $user.username }}'; then
-      ceph --cluster "${CLUSTER}" dashboard ac-user-set-password '{{ $user.username }}' '{{ $user.password }}'
+      ceph --cluster "${CLUSTER}" dashboard ac-user-set-password '{{ $user.username }}' '{{ $user.password }}' --force-password
       ceph --cluster "${CLUSTER}" dashboard ac-user-set-roles '{{ $user.username }}' '{{ $user.role }}'
     else
-      ceph --cluster "${CLUSTER}" dashboard ac-user-create '{{ $user.username }}' '{{ $user.password }}' '{{ $user.role }}'
+      ceph --cluster "${CLUSTER}" dashboard ac-user-create '{{ $user.username }}' '{{ $user.password }}' '{{ $user.role }}' --force-password
     fi
   {{- end }}
 {{- end }}
