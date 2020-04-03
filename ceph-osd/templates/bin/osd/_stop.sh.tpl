@@ -22,19 +22,10 @@ set -ex
 
 OSD_PID="$(cat /run/ceph-osd.pid)"
 
-if ceph -v | fgrep -q nautilus; then
-    while kill -0 ${OSD_PID} >/dev/null 2>&1; do
-      kill -SIGTERM ${OSD_PID}
-      sleep 1
-    done
-else
-    while pkill -0 -P ${OSD_PID} >/dev/null 2>&1; do
-      # ceph-osd is wrapped in /usr/bin/flock.  pkill -P kills the child
-      # (ceph-osd) and flock follows suit.
-      pkill -SIGTERM -P ${OSD_PID}
-      sleep 1
-    done
-fi
+while kill -0 ${OSD_PID} >/dev/null 2>&1; do
+  kill -SIGTERM ${OSD_PID}
+  sleep 1
+done
 
 OSD_MNT="$(df --output=target | grep '/var/lib/ceph/osd/' | head -1)"
 umount "$OSD_MNT" || lsof "$OSD_MNT"

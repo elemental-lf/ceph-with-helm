@@ -89,29 +89,21 @@ ceph \
   crush \
   create-or-move -- "${OSD_ID}" "${OSD_WEIGHT}" ${CRUSH_LOCATION}
 
-# Also look at the corresponding code in _stop.sh.tpl.
-if ceph -v | fgrep -q nautilus; then
-    # Starting with Nautilus Ceph implements flock in the ceph-osd daemon directly.
-    # See: https://tracker.ceph.com/issues/38150, https://github.com/ceph/ceph/pull/26245.
-    # There are backporting tickets for Mimic and Luminous, but they haven't been acted on since February 2019. (27.08.2019)
-    exec ceph-osd \
-        --cluster "${CLUSTER}" \
-        -f \
-        -i "${OSD_ID}" \
-        --setuser ceph \
-        --setgroup disk & echo $! > /run/ceph-osd.pid
-else
-    # The flock prevents two ceph-osd processes from accessing the same
-    # OSD device. This may happen when pods are updated and the old and
-    # new version exist simultaneously.
-    # The recorded PID is actually the PID of the flock process.
-    exec flock --exclusive --timeout 15 \
-        "/dev/${LVM2_VG_NAME}/${OSD_LV_NAME}" \
-        ceph-osd \
-        --cluster "${CLUSTER}" \
-        -f \
-        -i "${OSD_ID}" \
-        --setuser ceph \
-        --setgroup disk & echo $! > /run/ceph-osd.pid
+# Starting with Nautilus Ceph implements flock on the logical volume to avoid data corruption
+# when ceph-osd processes in two separate containers try to access the same data.
+# See: https://tracker.ceph.com/issues/38150, https://github.com/ceph/ceph/pull/26245.
+# There are backporting tickets for Mimic and Luminous, but they haven't been acted on since February 2019. (03.04.2020)
+if ceph -v | egrep -q 'mimic|luminous'; then
+  echo 'ERROR- Nautilus or above are required, otherwise data corruption will ensue.'
+  exit 1
 fi
+
+# Also look at the corresponding code in _stop.sh.tpl.
+exec ceph-osd \
+    --cluster "${CLUSTER}" \
+    -f \
+    -i "${OSD_ID}" \
+    --setuser ceph \
+    --setgroup disk & echo $! > /run/ceph-osd.pid
+
 wait
