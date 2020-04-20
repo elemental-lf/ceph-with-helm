@@ -110,9 +110,12 @@ spec:
             - name: pod-var-lib-ceph
               mountPath: /var/lib/ceph
               readOnly: false
-            - name: run-lvm
-              mountPath: /run/lvm
-              readOnly: false
+            - name: run-udev
+              mountPath: /run/udev
+              readOnly: true
+            - name: run-udev-control
+              mountPath: /run/udev/control
+              readOnly: true
             - name: varlog
               mountPath: /var/log/ceph
             - name: ceph-osd-bin
@@ -198,6 +201,9 @@ spec:
             - name: run-udev
               mountPath: /run/udev
               readOnly: true
+            - name: run-udev-control
+              mountPath: /run/udev/control
+              readOnly: true
             - name: varlog
               mountPath: /var/log/ceph
             - name: ceph-osd-bin
@@ -225,6 +231,9 @@ spec:
         - name: run-udev
           hostPath:
             path: /run/udev
+        - name: run-udev-control
+          hostPath:
+            path: /dev/null
         - name: pod-var-lib-ceph
           emptyDir: {}
         - name: varlog
