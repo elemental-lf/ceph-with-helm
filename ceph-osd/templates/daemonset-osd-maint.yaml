@@ -58,19 +58,28 @@ spec:
           args:
             - '3650d'
           volumeMounts:
+            # Volume mounts are identical to main OSD container (see cr-osds.yaml)
             - name: pod-tmp
               mountPath: /tmp
             - name: pod-run
               mountPath: /run
             - name: pod-etc-ceph
               mountPath: /etc/ceph
+            - name: ceph-osd-bin
+              mountPath: /tmp/osd-start.sh
+              subPath: osd-start.sh
+              readOnly: true
+            - name: ceph-osd-bin
+              mountPath: /tmp/osd-check.sh
+              subPath: osd-check.sh
+              readOnly: true
+            - name: ceph-osd-bin
+              mountPath: /tmp/osd-stop.sh
+              subPath: osd-stop.sh
+              readOnly: true
             - name: ceph-etc
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
-              readOnly: true
-            - name: ceph-client-admin-keyring
-              mountPath: /etc/ceph/ceph.client.admin.keyring
-              subPath: ceph.client.admin.keyring
               readOnly: true
             - name: ceph-bootstrap-osd-keyring
               mountPath: /var/lib/ceph/bootstrap-osd/ceph.keyring
@@ -91,12 +100,25 @@ spec:
               mountPath: /etc/lvm/lvmlocal.conf
               subPath: lvmlocal.conf
               readOnly: true
+            - name: ceph-osd-bin
+              mountPath: /usr/local/sbin/smartctl
+              subPath: smartctl
+              readOnly: true
+            - name: ceph-osd-bin
+              mountPath: /etc/sudoers.d/ceph-osd-smartctl
+              subPath: sudoers.d-ceph-osd-smartctl
+            # Maint container specific volume mounts
+            - name: ceph-client-admin-keyring
+              mountPath: /etc/ceph/ceph.client.admin.keyring
+              subPath: ceph.client.admin.keyring
+              readOnly: true
       volumes:
+        # Volumes are identical to main OSD container (see cr-osds.yaml)
         - name: pod-tmp
           emptyDir: {}
         - name: pod-run
           emptyDir:
-           medium: "Memory"
+            medium: "Memory"
         - name: pod-etc-ceph
           emptyDir: {}
         - name: devices
@@ -120,6 +142,7 @@ spec:
         - name: ceph-bootstrap-osd-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.osd }}
+        # Maint container specific volumes
         - name: ceph-client-admin-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.admin }}

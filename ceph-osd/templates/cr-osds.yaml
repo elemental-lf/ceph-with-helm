@@ -119,6 +119,13 @@ spec:
               mountPath: /etc/lvm/lvmlocal.conf
               subPath: lvmlocal.conf
               readOnly: true
+            - name: ceph-osd-bin
+              mountPath: /usr/local/sbin/smartctl
+              subPath: smartctl
+              readOnly: true
+            - name: ceph-osd-bin
+              mountPath: /etc/sudoers.d/ceph-osd-smartctl
+              subPath: sudoers.d-ceph-osd-smartctl
       containers:
         - name: osd
 {{ tuple $envAll "ceph_osd" | include "helm-toolkit.snippets.image" | indent 10 }}
@@ -215,9 +222,6 @@ spec:
         - name: devices
           hostPath:
             path: {{ .Values.conf.storage.dev_path }}
-        - name: run-lvm
-          hostPath:
-            path: /run/lvm
         - name: run-udev
           hostPath:
             path: /run/udev
