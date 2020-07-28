@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 import re
 import os
 import subprocess
@@ -20,7 +20,7 @@ monmap_command = 'ceph --cluster=${CLUSTER} mon getmap > /tmp/monmap && '\
 
 
 def extract_mons_from_monmap():
-    monmap = subprocess.check_output(monmap_command, shell=True)
+    monmap = subprocess.check_output(monmap_command, shell=True, encoding='utf-8', errors='ignore')
     mons = {}
     for line in monmap.split("\n"):
         m = re.match(MON_REGEX_1, line)
@@ -34,8 +34,8 @@ def extract_mons_from_monmap():
 
 
 def extract_mons_from_kubeapi():
-    kubemap = subprocess.check_output(kubectl_command, shell=True)
-    return json.loads(kubemap)
+    kubemap = subprocess.check_output(kubectl_command, shell=True, encoding='utf-8', errors='ignore')
+    return json.loads(kubkemap)
 
 current_mons = extract_mons_from_monmap()
 expected_mons = extract_mons_from_kubeapi()
