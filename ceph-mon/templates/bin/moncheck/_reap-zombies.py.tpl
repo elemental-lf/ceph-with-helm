@@ -35,7 +35,7 @@ def extract_mons_from_monmap():
 
 def extract_mons_from_kubeapi():
     kubemap = subprocess.check_output(kubectl_command, shell=True, encoding='utf-8', errors='ignore')
-    return json.loads(kubkemap)
+    return json.loads(kubemap)
 
 current_mons = extract_mons_from_monmap()
 expected_mons = extract_mons_from_kubeapi()
