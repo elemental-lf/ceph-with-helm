@@ -44,6 +44,10 @@ kind: ServiceAccount
 metadata:
   name: {{ $saName }}
   namespace: {{ $saNamespace }}
+{{- if $envAll.Values.images.image_pull_secrets }}
+imagePullSecrets:
+{{ toYaml $envAll.Values.images.image_pull_secrets | indent 2 }}
+{{- end }}
 {{- range $k, $v := $deps -}}
 {{- if eq $k "services" }}
 {{- range $serv := $v }}
