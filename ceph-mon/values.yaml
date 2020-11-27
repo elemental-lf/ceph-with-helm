@@ -698,7 +698,7 @@ conf:
       #  Don't setup web service configuration options for the dashboard here.
       balancer:
         active: 1
-        mode: crush-compat
+        mode: upmap
       devicehealth:
         enable_monitoring: true
         self_heal: false
