@@ -56,6 +56,8 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: ceph-rgw-s3-admin-{{ $s3AdminHashStringSuffix }}
+  labels:
+{{ tuple $envAll "ceph" "rgw-s3-admin" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:
   template:
     metadata:

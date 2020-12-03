@@ -55,6 +55,8 @@ metadata:
   name: {{ $serviceAccountName }}
   annotations:
     "helm.sh/hook": pre-delete
+  labels:
+{{ tuple $envAll "ceph" "client-key-cleaner" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:
   template:
     metadata:
