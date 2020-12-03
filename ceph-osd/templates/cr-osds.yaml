@@ -14,8 +14,12 @@ kind: CephOSD
 metadata:
   name: ceph-osds
 spec:
+{{- if .Values.conf.storage.osd }}
   storage:
 {{ toYaml .Values.conf.storage.osd | indent 2 }}
+{{- else }}
+  storage: []
+{{- end }}
   updateDomain: Host
   podTemplate:
     kind: Pod
