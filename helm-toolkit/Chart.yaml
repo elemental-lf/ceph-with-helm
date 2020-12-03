@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: v1
+apiVersion: v2
 description: OpenStack-Helm Helm-Toolkit
 name: helm-toolkit
-version: 0.1.0
+version: 0.2.0
 home: https://docs.openstack.org/openstack-helm
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/OpenStack-Helm/OpenStack_Project_OpenStackHelm_vertical.png
 sources:
@@ -23,3 +23,4 @@ sources:
   - https://git.openstack.org/cgit/openstack/openstack-helm
 maintainers:
   - name: OpenStack-Helm Authors
+type: library

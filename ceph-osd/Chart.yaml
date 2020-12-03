@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: v1
+apiVersion: v2
 description: OpenStack-Helm Ceph OSD
 name: ceph-osd
-version: 0.1.0
+version: 0.2.0
+dependencies:
+  - name: helm-toolkit
+    repository: "@dual"
+    version: 0.2.0
