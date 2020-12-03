@@ -257,6 +257,4 @@ spec:
           operator: Exists
         - key: node.kubernetes.io/unreachable
           operator: Exists
-status:
-
 {{- end }}
