@@ -14,6 +14,7 @@
 
 # It's necessary to set this because some environments don't link sh -> bash.
 SHELL := /bin/bash
+HELM  := helm
 TASK  := build
 
 EXCLUDES := tools
@@ -35,14 +36,13 @@ $(CHARTS):
 	fi
 
 init-%:
-	if [ -f $*/Makefile ]; then make -C $*; fi
-	if [ -f $*/requirements.yaml ]; then helm dep up $*; fi
+	$(HELM) dep up $*
 
 lint-%: init-%
-	if [ -d $* ]; then helm lint $*; fi
+	if [ -d $* ]; then $(HELM) lint $*; fi
 
 build-%: lint-%
-	if [ -d $* ]; then helm package $*; fi
+	if [ -d $* ]; then $(HELM) package $*; fi
 
 clean:
 	@echo "Clean all build artifacts"
