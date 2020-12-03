@@ -163,7 +163,7 @@ return: |
 {{- $hostName := tuple $backendServiceType "public" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
 {{- $hostNameFull := tuple $backendServiceType "public" $envAll | include "helm-toolkit.endpoints.hostname_fqdn_endpoint_lookup" }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: {{ $ingressName }}
@@ -180,7 +180,7 @@ spec:
 {{- range $key2, $ingressController := tuple "cluster" }}
 {{- $hostNameFullRules := dict "vHost" $hostNameFull "backendName" $backendName "backendPort" $backendPort }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: {{ printf "%s-%s-%s" $ingressName $ingressController "fqdn" }}
