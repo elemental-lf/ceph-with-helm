@@ -1,9 +1,9 @@
-FROM docker.io/ceph/daemon-base:v4.0.15-stable-4.0-nautilus-centos-7-x86_64
+FROM docker.io/ceph/daemon-base:v4.0.16-stable-4.0-nautilus-centos-7-x86_64
 
-LABEL version="4.0.15-nautilus-k8s-1.18.12-rev-1"
+LABEL version="4.0.16-nautilus-k8s-1.19.4-rev-1"
 LABEL maintainer="lf@elemental.net"
 
-ARG KUBECTL_VERSION=v1.18.12
+ARG KUBECTL_VERSION=v1.19.4
 
 RUN set -ex && \
     yum install -y epel-release && \
