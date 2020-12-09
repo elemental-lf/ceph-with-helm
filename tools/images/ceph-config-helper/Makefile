@@ -17,7 +17,3 @@ push:
 		else \
 			docker push elementalnet/`basename $$PWD`; \
 		fi
-
-.PHONE: update
-update:
-	mod up --build
