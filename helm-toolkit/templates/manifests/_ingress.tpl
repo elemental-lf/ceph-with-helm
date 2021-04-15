@@ -148,9 +148,12 @@ return: |
   http:
     paths:
       - path: /
+        pathType: ImplementationSpecific
         backend:
-          serviceName: {{ $backendName }}
-          servicePort: {{ $backendPort }}
+          service:
+            name: {{ $backendName }}
+            port:
+              name: {{ $backendPort }}
 {{- end }}
 
 {{- define "helm-toolkit.manifests.ingress" -}}
@@ -163,7 +166,7 @@ return: |
 {{- $hostName := tuple $backendServiceType "public" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
 {{- $hostNameFull := tuple $backendServiceType "public" $envAll | include "helm-toolkit.endpoints.hostname_fqdn_endpoint_lookup" }}
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $ingressName }}
@@ -180,7 +183,7 @@ spec:
 {{- range $key2, $ingressController := tuple "cluster" }}
 {{- $hostNameFullRules := dict "vHost" $hostNameFull "backendName" $backendName "backendPort" $backendPort }}
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ printf "%s-%s-%s" $ingressName $ingressController "fqdn" }}
