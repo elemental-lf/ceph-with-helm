@@ -61,20 +61,27 @@ ceph --cluster "${CLUSTER}" config set mgr mgr/dashboard/standby_behaviour error
 ceph --cluster "${CLUSTER}" config set mgr mgr/dashboard/standby_error_status_code 503 --force
 
 {{- if and .Values.conf.features.rgw .Values.conf.rgw_s3.enabled }}
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-access-key '{{ .Values.conf.rgw_s3.auth.admin.access_key }}'
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-secret-key '{{ .Values.conf.rgw_s3.auth.admin.secret_key }}'
+# FIXME: This is ugly and insecure.
+echo -n '{{ .Values.conf.rgw_s3.auth.admin.access_key }}' >/tmp/rgw-api-access-key
+echo -n '{{ .Values.conf.rgw_s3.auth.admin.secret_key }}' >/tmp/rgw-api-secret-key
+ceph --cluster "${CLUSTER}" dashboard set-rgw-api-access-key -i /tmp/rgw-api-access-key
+ceph --cluster "${CLUSTER}" dashboard set-rgw-api-secret-key -i /tmp/rgw-api-secret-key
+rm -f /tmp/rgw-api-access-key /tmp/rgw-api-secret-key
 ceph --cluster "${CLUSTER}" dashboard set-rgw-api-host ceph-rgw
 ceph --cluster "${CLUSTER}" dashboard set-rgw-api-port '{{ tuple "ceph_object_store" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}'
 {{- end }}
 
 {{- if .Values.conf.mgr.dashboard.users }}
   {{- range $user := .Values.conf.mgr.dashboard.users }}
+    # FIXME: This is ugly and insecure.
+    echo -n '{{ $user.password }}' >/tmp/dashboard-user-password
     if ceph --cluster "${CLUSTER}" dashboard ac-user-show '{{ $user.username }}'; then
-      ceph --cluster "${CLUSTER}" dashboard ac-user-set-password '{{ $user.username }}' '{{ $user.password }}' --force-password
+      ceph --cluster "${CLUSTER}" dashboard ac-user-set-password '{{ $user.username }}' -i /tmp/dashboard-user-password --force-password
       ceph --cluster "${CLUSTER}" dashboard ac-user-set-roles '{{ $user.username }}' '{{ $user.role }}'
     else
-      ceph --cluster "${CLUSTER}" dashboard ac-user-create '{{ $user.username }}' '{{ $user.password }}' '{{ $user.role }}' --force-password
+      ceph --cluster "${CLUSTER}" dashboard ac-user-create '{{ $user.username }}' '{{ $user.role }}' -i /tmp/dashboard-user-password --force-password
     fi
+    rm -f /tmp/dashboard-user-password
   {{- end }}
 {{- end }}
 
