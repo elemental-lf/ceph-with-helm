@@ -22,7 +22,7 @@ export LC_ALL=C
 COMMAND="${@:-liveness}"
 
 function extract_osd_epoch () {
-    python -c 'import json; import sys; input = json.load(sys.stdin); print(input["osd_epoch"]);' 2>/dev/null
+    python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input["osd_epoch"]);' 2>/dev/null
 }
 
 function health_check () {

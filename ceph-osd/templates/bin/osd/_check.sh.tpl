@@ -26,7 +26,7 @@ SSUFFIX=${CEPH_SOCKET_SUFFIX:-asok}
 COMMAND="${@:-liveness}"
 
 function extract_state () {
-    python -c 'import json; import sys; input = json.load(sys.stdin); print(input["state"]);' 2>/dev/null
+    python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input["state"]);' 2>/dev/null
 }
 
 function heath_check () {

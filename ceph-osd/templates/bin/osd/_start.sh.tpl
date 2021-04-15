@@ -25,15 +25,15 @@ set -ex
 OSD_DEVICE="$(readlink -e ${OSD_DEVICE})"
 
 function extract_osd_id {
-  python -c 'import json; import sys; input = json.load(sys.stdin); print(input[input.keys()[0]][0]["tags"]["ceph.osd_id"]);'
+  python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["tags"]["ceph.osd_id"]);'
 }
 
 function extract_osd_fsid {
-  python -c 'import json; import sys; input = json.load(sys.stdin); print(input[input.keys()[0]][0]["tags"]["ceph.osd_fsid"]);'
+  python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["tags"]["ceph.osd_fsid"]);'
 }
 
 function extract_osd_lv_name {
-  python -c 'import json; import sys; input = json.load(sys.stdin); print(input[input.keys()[0]][0]["lv_name"]);'
+  python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["lv_name"]);'
 }
 
 if [ ! -e "/etc/ceph/${CLUSTER}.conf" ]; then

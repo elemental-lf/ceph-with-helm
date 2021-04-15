@@ -22,7 +22,7 @@ set -ex
 : "${OSD_FORCE_ZAP:=0}"
 
 function extract_cluster_fsid {
-  python -c 'import json; import sys; input = json.load(sys.stdin); print(input[input.keys()[0]][0]["tags"]["ceph.cluster_fsid"]);'
+  python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["tags"]["ceph.cluster_fsid"]);'
 }
 
 # Make sure all device files are there
