@@ -33,7 +33,7 @@ fi
 
 ceph --cluster "${CLUSTER}" -v
 
-MODULES_TO_DISABLE=`ceph mgr dump | python3 -c "import json, sys; print ' '.join(json.load(sys.stdin)['modules'])"`
+MODULES_TO_DISABLE=`ceph mgr dump | python3 -c "import json, sys; print(' '.join(json.load(sys.stdin)['modules']))"`
 {{- if .Values.conf.mgr.modules }}
   {{- range $value := .Values.conf.mgr.modules }}
     ceph --cluster "${CLUSTER}" mgr module enable  '{{ $value }}' --force
