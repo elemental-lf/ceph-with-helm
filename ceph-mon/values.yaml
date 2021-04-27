@@ -38,8 +38,8 @@ images:
     ceph_mds:                'docker.io/ceph/daemon:v5.0.9-stable-5.0-octopus-centos-8-x86_64'
     ceph_rgw:                'docker.io/ceph/daemon:v5.0.9-stable-5.0-octopus-centos-8-x86_64'
     #
-    ceph_cephfs_provisioner: 'docker.io/elementalnet/cephfs-provisioner:0.5.0'
-    ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.5.0'
+    ceph_cephfs_provisioner: 'docker.io/elementalnet/cephfs-provisioner:0.8.0'
+    ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.8.0'
     #
     dep_check: 'quay.io/airshipit/kubernetes-entrypoint:v1.0.0'
     ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:5.0.9-octopus-k8s-1.19.9-rev-1'
