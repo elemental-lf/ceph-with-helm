@@ -117,11 +117,11 @@ pod:
         storage_keys_generator:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-    keyring_generator:
+    key_generator:
       pod:
         runAsUser: 65534
       container:
-        keyring_generator:
+        key_generator:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
 
@@ -409,13 +409,16 @@ pod:
 
 secrets:
   keyrings:
-    admin: ceph-client-admin-keyring
+    client.admin: ceph-client-admin-keyring
     mon: ceph-mon-keyring
-    mds: ceph-bootstrap-mds-keyring
-    osd: ceph-bootstrap-osd-keyring
-    rgw: ceph-bootstrap-rgw-keyring
-    mgr: ceph-bootstrap-mgr-keyring
-    rbd: ceph-bootstrap-rbd-keyring
+    client.bootstrap-mds: ceph-bootstrap-mds-keyring
+    client.bootstrap-osd: ceph-bootstrap-osd-keyring
+    client.bootstrap-rgw: ceph-bootstrap-rgw-keyring
+    client.bootstrap-mgr: ceph-bootstrap-mgr-keyring
+    client.bootstrap-rbd: ceph-bootstrap-rbd-keyring
+  csi_keys:
+    rbd: ceph-csi-rbd
+    cephfs: ceph-csi-cephfs
   rgw_s3:
     admin: radosgw-s3-admin-creds
   # ceph-rgw
@@ -465,7 +468,7 @@ conf:
     rgw: true
   templates:
     keyring:
-      admin: |
+      client.admin: |
         [client.admin]
           key = {{ key }}
           auid = 0
@@ -477,27 +480,26 @@ conf:
         [mon.]
           key = {{ key }}
           caps mon = "allow *"
-      bootstrap:
-        mds: |
-          [client.bootstrap-mds]
-            key = {{ key }}
-            caps mon = "allow profile bootstrap-mds"
-        mgr: |
-          [client.bootstrap-mgr]
-            key = {{ key }}
-            caps mgr = "allow profile bootstrap-mgr"
-        osd: |
-          [client.bootstrap-osd]
-            key = {{ key }}
-            caps mon = "allow profile bootstrap-osd"
-        rgw: |
-          [client.bootstrap-rgw]
-            key = {{ key }}
-            caps mon = "allow profile bootstrap-rgw"
-        rbd: |
-          [client.bootstrap-rbd]
-            key = {{ key }}
-            caps mon = "allow profile bootstrap-rbd"
+      client.bootstrap-mds: |
+        [client.bootstrap-mds]
+          key = {{ key }}
+          caps mon = "allow profile bootstrap-mds"
+      client.bootstrap-mgr: |
+        [client.bootstrap-mgr]
+          key = {{ key }}
+          caps mgr = "allow profile bootstrap-mgr"
+      client.bootstrap-osd: |
+        [client.bootstrap-osd]
+          key = {{ key }}
+          caps mon = "allow profile bootstrap-osd"
+      client.bootstrap-rgw: |
+        [client.bootstrap-rgw]
+          key = {{ key }}
+          caps mon = "allow profile bootstrap-rgw"
+      client.bootstrap-rbd: |
+        [client.bootstrap-rbd]
+          key = {{ key }}
+          caps mon = "allow profile bootstrap-rbd"
   ceph:
     global:
       cephx_cluster_require_signatures: true
@@ -724,28 +726,32 @@ dependencies:
       services:
         - endpoint: internal
           service: ceph_mon
-    job_keyring_generator:
+    job_key_generator:
       jobs: null
     mon:
       jobs:
-        - ceph-storage-keys-generator
-        - ceph-mon-keyring-generator
+        - ceph-client-admin-key-generator
+        - ceph-client-bootstrap-mds-key-generator
+        - ceph-client-bootstrap-mgr-key-generator
+        - ceph-client-bootstrap-osd-key-generator
+        - ceph-client-bootstrap-rbd-key-generator
+        - ceph-client-bootstrap-rgw-key-generator
+        - ceph-mon-key-generator
     moncheck:
       jobs:
-        - ceph-storage-keys-generator
-        - ceph-mon-keyring-generator
+        - ceph-mon-key-generator
       services:
         - endpoint: discovery
           service: ceph_mon
     osd:
       jobs:
-        - ceph-storage-keys-generator
-        - ceph-osd-keyring-generator
+        - ceph-client-bootstrap-osd-key-generator
       services:
         - endpoint: internal
           service: ceph_mon
     storage_keys_generator:
-      jobs: null
+      jobs:
+        - ceph-client-admin-key-generator
     cephfs_client_key_generator:
       jobs: null
     cephfs_provisioner:
@@ -758,8 +764,7 @@ dependencies:
           service: ceph_mon
     mds:
       jobs:
-        - name: ceph-storage-keys-generator
-        - name: ceph-mds-keyring-generator
+        - name: ceph-client-bootstrap-mds-key-generator
         - labels:
             application: ceph
             component: rbd-pool
@@ -768,8 +773,7 @@ dependencies:
           service: ceph_mon
     mgr:
       jobs:
-        - ceph-storage-keys-generator
-        - ceph-mgr-keyring-generator
+        - ceph-client-bootstrap-mgr-key-generator
       services:
         - endpoint: internal
           service: ceph_mon

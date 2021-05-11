@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and .Values.manifests.configmap_templates .Values.deployment.storage_secrets }}
+{{- if and false .Values.manifests.configmap_templates .Values.deployment.storage_secrets }}
 {{- $envAll := . }}
 ---
 apiVersion: v1
@@ -22,18 +22,8 @@ kind: ConfigMap
 metadata:
   name: ceph-templates
 data:
-  admin.keyring: |
-{{ .Values.conf.templates.keyring.admin | indent 4 }}
-  mon.keyring: |
-{{ .Values.conf.templates.keyring.mon | indent 4 }}
-  bootstrap.keyring.mds: |
-{{ .Values.conf.templates.keyring.bootstrap.mds | indent 4 }}
-  bootstrap.keyring.mgr: |
-{{ .Values.conf.templates.keyring.bootstrap.mgr | indent 4 }}
-  bootstrap.keyring.osd: |
-{{ .Values.conf.templates.keyring.bootstrap.osd | indent 4 }}
-  bootstrap.keyring.rgw: |
-{{ .Values.conf.templates.keyring.bootstrap.rgw | indent 4 }}
-  bootstrap.keyring.rbd: |
-{{ .Values.conf.templates.keyring.bootstrap.rbd | indent 4 }}
+{{- range $userName, $template := .Values.conf.templates.keyring }}
+  keyring.{{ $userName }}: |
+{{ $template | indent 4 }}
+{{- end }}
 {{- end }}

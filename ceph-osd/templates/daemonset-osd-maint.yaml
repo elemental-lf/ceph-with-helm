@@ -83,8 +83,8 @@ spec:
               readOnly: true
             - name: ceph-bootstrap-osd-keyring
               mountPath: /var/lib/ceph/bootstrap-osd/ceph.keyring
-              subPath: ceph.keyring
-              readOnly: false
+              subPath: keyring
+              readOnly: true
             - name: devices
               mountPath: /dev
               readOnly: false
@@ -113,7 +113,7 @@ spec:
             # Maint container specific volume mounts
             - name: ceph-client-admin-keyring
               mountPath: /etc/ceph/ceph.client.admin.keyring
-              subPath: ceph.client.admin.keyring
+              subPath: keyring
               readOnly: true
       volumes:
         # Volumes are identical to main OSD container (see cr-osds.yaml)
@@ -147,9 +147,9 @@ spec:
             defaultMode: 0444
         - name: ceph-bootstrap-osd-keyring
           secret:
-            secretName: {{ .Values.secrets.keyrings.osd }}
+            secretName: {{ index .Values.secrets.keyrings "client.bootstrap-osd" }}
         # Maint container specific volumes
         - name: ceph-client-admin-keyring
           secret:
-            secretName: {{ .Values.secrets.keyrings.admin }}
+            secretName: {{ index .Values.secrets.keyrings "client.admin" }}
 {{- end }}

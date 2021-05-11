@@ -17,68 +17,54 @@ limitations under the License.
 */}}
 
 set -ex
-{{ if .Release.IsInstall }}
 
-function ceph_gen_key () {
-  ${CEPH_GEN_DIR}/keys-bootstrap-keyring-generator.py
-}
+# Read user name from secret and remove client. prefix
+CEPH_USER=$(kubectl get secret ${CEPH_CLIENT_ADMIN_SECRET_NAME} --namespace=${DEPLOYMENT_NAMESPACE} \
+    -o json | jq -r '.data.user' | base64 -d | sed -e 's/^client\.//' | base64 -w0)
+CEPH_KEY=$(kubectl get secret ${CEPH_CLIENT_ADMIN_SECRET_NAME} --namespace=${DEPLOYMENT_NAMESPACE} \
+    -o json | jq -r '.data.key')
 
-function kube_ceph_keyring_gen () {
-  CEPH_KEY=$1
-  CEPH_KEY_TEMPLATE=$2
-  sed "s|{{"{{"}} key {{"}}"}}|${CEPH_KEY}|" ${CEPH_TEMPLATES_DIR}/${CEPH_KEY_TEMPLATE} | base64 -w0 | tr -d '\n'
-}
-
-CEPH_CLIENT_KEY=$(ceph_gen_key)
-
-function create_kube_key () {
-  CEPH_KEYRING=$1
-  CEPH_KEYRING_NAME=$2
-  CEPH_KEYRING_TEMPLATE=$3
-  KUBE_SECRET_NAME=$4
-
-  if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${KUBE_SECRET_NAME}; then
-    {
-      cat <<EOF
+# TODO: Remove this and the resulting key when CSI migration is done.
+if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${CEPH_STORAGECLASS_ADMIN_SECRET_NAME}; then
+  kubectl create --namespace ${DEPLOYMENT_NAMESPACE} -f - <<EOF
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: ${KUBE_SECRET_NAME}
-type: Opaque
-data:
-  ${CEPH_KEYRING_NAME}: $( kube_ceph_keyring_gen ${CEPH_KEYRING} ${CEPH_KEYRING_TEMPLATE} )
-EOF
-    } | kubectl apply --namespace ${DEPLOYMENT_NAMESPACE} -f -
-  fi
-}
-#create_kube_key <ceph_key> <ceph_keyring_name> <ceph_keyring_template> <kube_secret_name>
-create_kube_key ${CEPH_CLIENT_KEY} ${CEPH_KEYRING_NAME} ${CEPH_KEYRING_TEMPLATE} ${CEPH_KEYRING_ADMIN_NAME}
-
-function create_kube_storage_key () {
-  CEPH_KEYRING=$1
-  KUBE_SECRET_NAME=$2
-
-  if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${KUBE_SECRET_NAME}; then
-    {
-      cat <<EOF
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ${KUBE_SECRET_NAME}
+  name: ${CEPH_STORAGECLASS_ADMIN_SECRET_NAME}
 type: kubernetes.io/rbd
 data:
-  key: $( echo ${CEPH_KEYRING} | base64 | tr -d '\n' )
+  key: ${CEPH_KEY}
 EOF
-    } | kubectl apply --namespace ${DEPLOYMENT_NAMESPACE} -f -
-  fi
-}
-#create_kube_storage_key <ceph_key> <kube_secret_name>
-create_kube_storage_key ${CEPH_CLIENT_KEY} ${CEPH_STORAGECLASS_ADMIN_SECRET_NAME}
+fi
+# END TODO
 
-{{ else }}
+if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${CEPH_CSI_RBD_SECRET_NAME}; then
+  kubectl create --namespace ${DEPLOYMENT_NAMESPACE} -f - <<EOF
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${CEPH_CSI_RBD_SECRET_NAME}
+data:
+  userID: ${CEPH_USER}
+  userKey: ${CEPH_KEY}
+EOF
+fi
 
-echo "Not touching ${KUBE_SECRET_NAME} as this is not the initial deployment"
-
-{{ end }}
+if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${CEPH_CSI_CEPHFS_SECRET_NAME}; then
+  kubectl create --namespace ${DEPLOYMENT_NAMESPACE} -f - <<EOF
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${CEPH_CSI_CEPHFS_SECRET_NAME}
+data:
+  # Required for statically provisioned volumes
+  userID: ${CEPH_USER}
+  userKey: ${CEPH_KEY}
+  # Required for dynamically provisioned volumes
+  adminID: ${CEPH_USER}
+  adminKey: ${CEPH_KEY}
+EOF
+fi

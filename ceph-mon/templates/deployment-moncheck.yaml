@@ -90,11 +90,11 @@ spec:
               readOnly: true
             - name: ceph-client-admin-keyring
               mountPath: /etc/ceph/ceph.client.admin.keyring
-              subPath: ceph.client.admin.keyring
+              subPath: keyring
               readOnly: true
             - name: ceph-mon-keyring
               mountPath: /etc/ceph/ceph.mon.keyring
-              subPath: ceph.mon.keyring
+              subPath: keyring
               readOnly: true
             - name: pod-var-lib-ceph
               mountPath: /var/lib/ceph
@@ -119,7 +119,7 @@ spec:
           emptyDir: {}
         - name: ceph-client-admin-keyring
           secret:
-            secretName: {{ .Values.secrets.keyrings.admin }}
+            secretName: {{ index .Values.secrets.keyrings "client.admin" }}
         - name: ceph-mon-keyring
           secret:
             secretName: {{ .Values.secrets.keyrings.mon }}

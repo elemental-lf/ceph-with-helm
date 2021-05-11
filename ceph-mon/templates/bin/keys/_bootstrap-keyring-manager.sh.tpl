@@ -18,26 +18,20 @@ limitations under the License.
 
 set -ex
 
-{{ if .Release.IsInstall }}
-
 function ceph_gen_key () {
   ${CEPH_GEN_DIR}/keys-bootstrap-keyring-generator.py
 }
 
 function kube_ceph_keyring_gen () {
   CEPH_KEY=$1
-  CEPH_KEY_TEMPLATE=$2
-  sed "s|{{"{{"}} key {{"}}"}}|${CEPH_KEY}|" ${CEPH_TEMPLATES_DIR}/${CEPH_KEY_TEMPLATE} | base64 -w0 | tr -d '\n'
+  CEPH_KEYRING_TEMPLATE=$2
+  echo -n "${CEPH_KEYRING_TEMPLATE}" | sed "s|{{"{{"}} key {{"}}"}}|${CEPH_KEY}|" | base64 -w0
 }
 
-function create_kube_key () {
-  CEPH_KEYRING=$1
-  CEPH_KEYRING_NAME=$2
-  CEPH_KEYRING_TEMPLATE=$3
-  KUBE_SECRET_NAME=$4
-  if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${KUBE_SECRET_NAME}; then
-    {
-      cat <<EOF
+CEPH_KEY="$(ceph_gen_key)"
+
+if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${KUBE_SECRET_NAME}; then
+  kubectl create --namespace ${DEPLOYMENT_NAMESPACE} -f - <<EOF
 ---
 apiVersion: v1
 kind: Secret
@@ -45,17 +39,9 @@ metadata:
   name: ${KUBE_SECRET_NAME}
 type: Opaque
 data:
-  ${CEPH_KEYRING_NAME}: $( kube_ceph_keyring_gen ${CEPH_KEYRING} ${CEPH_KEYRING_TEMPLATE} )
+  user: $(echo -n "$CEPH_USER" | base64 -w0)
+  key: $(echo -n "$CEPH_KEY" | base64 -w0)
+  keyring: $(kube_ceph_keyring_gen "${CEPH_KEY}" "${CEPH_KEYRING_TEMPLATE}")
 EOF
-    } | kubectl apply --namespace ${DEPLOYMENT_NAMESPACE} -f -
-  fi
-}
+fi
 
-#create_kube_key <ceph_key> <ceph_keyring_name> <ceph_keyring_template> <kube_secret_name>
-create_kube_key $(ceph_gen_key) ${CEPH_KEYRING_NAME} ${CEPH_KEYRING_TEMPLATE} ${KUBE_SECRET_NAME}
-
-{{ else }}
-
-echo "Not touching ${KUBE_SECRET_NAME} as this is not the initial deployment"
-
-{{- end -}}

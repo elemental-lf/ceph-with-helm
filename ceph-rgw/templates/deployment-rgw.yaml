@@ -111,8 +111,8 @@ spec:
               readOnly: true
             - name: ceph-bootstrap-rgw-keyring
               mountPath: /var/lib/ceph/bootstrap-rgw/ceph.keyring
-              subPath: ceph.keyring
-              readOnly: false
+              subPath: keyring
+              readOnly: true
             - name: pod-var-lib-ceph
               mountPath: /var/lib/ceph
               readOnly: false
@@ -136,5 +136,5 @@ spec:
           emptyDir: {}
         - name: ceph-bootstrap-rgw-keyring
           secret:
-            secretName: {{ .Values.secrets.keyrings.rgw }}
+            secretName: {{ index .Values.secrets.keyrings "client.bootstrap-rgw" }}
 {{- end }}

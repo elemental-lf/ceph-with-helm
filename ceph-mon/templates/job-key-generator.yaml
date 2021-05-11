@@ -16,11 +16,11 @@ limitations under the License.
 
 {{- if and .Values.manifests.job_keyring .Values.deployment.storage_secrets }}
 {{- $envAll := . }}
-{{- range $key1, $cephBootstrapKey := (omit .Values.secrets.keyrings "admin" | keys) }}
-{{- $jobName := print $cephBootstrapKey "-keyring-generator" }}
+{{- range $cephKey, $secretName := .Values.secrets.keyrings }}
+{{- $jobName := print $cephKey "-key-generator" | replace "." "-" }}
 
 {{- $serviceAccountName := print "ceph-" $jobName }}
-{{ tuple $envAll "job_keyring_generator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{ tuple $envAll "job_key_generator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -62,18 +62,18 @@ spec:
       labels:
 {{ tuple $envAll "ceph" $jobName | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
-{{ dict "envAll" $envAll "application" "keyring_generator" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
+{{ dict "envAll" $envAll "application" "key_generator" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
         {{ $envAll.Values.labels.job.node_selector_key }}: {{ $envAll.Values.labels.job.node_selector_value | quote }}
       initContainers:
-{{ tuple $envAll "job_keyring_generator" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll "job_key_generator" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name:  {{ $jobName }}
 {{ tuple $envAll "ceph_config_helper" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.secret_provisioning | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
-{{ dict "envAll" $envAll "application" "keyring_generator" "container" "keyring_generator" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+{{ dict "envAll" $envAll "application" "key_generator" "container" "key_generator" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
             - name: DEPLOYMENT_NAMESPACE
               valueFrom:
@@ -81,21 +81,13 @@ spec:
                   fieldPath: metadata.namespace
             - name: CEPH_GEN_DIR
               value: /tmp
-            - name: CEPH_TEMPLATES_DIR
-              value: /tmp/templates
-            {{- if eq $cephBootstrapKey "mon"}}
-            - name: CEPH_KEYRING_NAME
-              value: ceph.mon.keyring
+            - name: CEPH_USER
+              value: {{ $cephKey }}
             - name: CEPH_KEYRING_TEMPLATE
-              value: mon.keyring
-            {{- else }}
-            - name: CEPH_KEYRING_NAME
-              value: ceph.keyring
-            - name: CEPH_KEYRING_TEMPLATE
-              value: bootstrap.keyring.{{ $cephBootstrapKey }}
-            {{- end }}
+              value: |
+                {{- index $envAll.Values.conf.templates.keyring $cephKey | nindent 16 }}
             - name: KUBE_SECRET_NAME
-              value: {{  index $envAll.Values.secrets.keyrings $cephBootstrapKey }}
+              value: {{ $secretName }}
           command:
             - /tmp/keys-bootstrap-keyring-manager.sh
           volumeMounts:
@@ -111,9 +103,6 @@ spec:
               mountPath: /tmp/keys-bootstrap-keyring-generator.py
               subPath: keys-bootstrap-keyring-generator.py
               readOnly: true
-            - name: ceph-templates
-              mountPath: /tmp/templates
-              readOnly: true
       volumes:
         - name: pod-tmp
           emptyDir: {}
@@ -123,9 +112,5 @@ spec:
           configMap:
             name: ceph-mon-bin
             defaultMode: 0555
-        - name: ceph-templates
-          configMap:
-            name: ceph-templates
-            defaultMode: 0444
 {{- end }}
 {{- end }}

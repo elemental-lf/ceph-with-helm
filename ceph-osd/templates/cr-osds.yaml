@@ -106,7 +106,7 @@ spec:
               readOnly: true
             - name: ceph-bootstrap-osd-keyring
               mountPath: /var/lib/ceph/bootstrap-osd/ceph.keyring
-              subPath: ceph.keyring
+              subPath: keyring
               readOnly: false
             - name: devices
               mountPath: /dev
@@ -194,8 +194,8 @@ spec:
               readOnly: true
             - name: ceph-bootstrap-osd-keyring
               mountPath: /var/lib/ceph/bootstrap-osd/ceph.keyring
-              subPath: ceph.keyring
-              readOnly: false
+              subPath: keyring
+              readOnly: true
             - name: devices
               mountPath: /dev
               readOnly: false
@@ -252,7 +252,7 @@ spec:
             defaultMode: 0444
         - name: ceph-bootstrap-osd-keyring
           secret:
-            secretName: {{ .Values.secrets.keyrings.osd }}
+            secretName: {{ index .Values.secrets.keyrings "client.bootstrap-osd" }}
       tolerations:
         - key: node.kubernetes.io/unschedulable
           operator: Exists

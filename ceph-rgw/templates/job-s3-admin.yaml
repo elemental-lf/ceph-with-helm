@@ -107,7 +107,7 @@ spec:
               readOnly: true
             - name: ceph-client-admin-keyring
               mountPath: /etc/ceph/ceph.client.admin.keyring
-              subPath: ceph.client.admin.keyring
+              subPath: keyring
               readOnly: true
       volumes:
         - name: pod-tmp
@@ -124,5 +124,5 @@ spec:
             defaultMode: 0444
         - name: ceph-client-admin-keyring
           secret:
-            secretName: {{ .Values.secrets.keyrings.admin }}
+            secretName: {{ index .Values.secrets.keyrings "client.admin" }}
 {{- end }}

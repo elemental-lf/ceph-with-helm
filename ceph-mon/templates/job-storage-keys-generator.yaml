@@ -79,16 +79,14 @@ spec:
                   fieldPath: metadata.namespace
             - name: CEPH_GEN_DIR
               value: /tmp
-            - name: CEPH_TEMPLATES_DIR
-              value: /tmp/templates
-            - name: CEPH_KEYRING_NAME
-              value: ceph.client.admin.keyring
-            - name: CEPH_KEYRING_TEMPLATE
-              value: admin.keyring
-            - name: CEPH_KEYRING_ADMIN_NAME
-              value: {{ .Values.secrets.keyrings.admin }}
+            - name: CEPH_CLIENT_ADMIN_SECRET_NAME
+              value: {{ index .Values.secrets.keyrings "client.admin" }}
             - name: CEPH_STORAGECLASS_ADMIN_SECRET_NAME
               value: {{ .Values.conf.storageclasses.rbd.parameters.adminSecretName }}
+            - name: CEPH_CSI_RBD_SECRET_NAME
+              value: {{ .Values.secrets.csi_keys.rbd }}
+            - name: CEPH_CSI_CEPHFS_SECRET_NAME
+              value: {{ .Values.secrets.csi_keys.cephfs }}
           command:
             - /tmp/keys-storage-keyring-manager.sh
           volumeMounts:
@@ -104,9 +102,6 @@ spec:
               mountPath: /tmp/keys-bootstrap-keyring-generator.py
               subPath: keys-bootstrap-keyring-generator.py
               readOnly: true
-            - name: ceph-templates
-              mountPath: /tmp/templates
-              readOnly: true
       volumes:
         - name: pod-tmp
           emptyDir: {}
@@ -116,8 +111,4 @@ spec:
           configMap:
             name: ceph-mon-bin
             defaultMode: 0555
-        - name: ceph-templates
-          configMap:
-            name: ceph-templates
-            defaultMode: 0444
 {{- end }}
