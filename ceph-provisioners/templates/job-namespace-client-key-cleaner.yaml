@@ -62,8 +62,8 @@ spec:
     metadata:
       labels:
 {{ tuple $envAll "ceph" "client-key-cleaner" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
-{{ dict "envAll" $envAll "application" "namespace_client_key_cleaner" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
     spec:
+{{ dict "envAll" $envAll "application" "namespace_client_key_cleaner" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
