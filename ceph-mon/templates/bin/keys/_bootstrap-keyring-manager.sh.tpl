@@ -28,9 +28,9 @@ function kube_ceph_keyring_gen () {
   echo -n "${CEPH_KEYRING_TEMPLATE}" | sed "s|{{"{{"}} key {{"}}"}}|${CEPH_KEY}|" | base64 -w0
 }
 
-CEPH_KEY="$(ceph_gen_key)"
-
 if ! kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secrets ${KUBE_SECRET_NAME}; then
+  CEPH_KEY="$(ceph_gen_key)"
+
   kubectl create --namespace ${DEPLOYMENT_NAMESPACE} -f - <<EOF
 ---
 apiVersion: v1
