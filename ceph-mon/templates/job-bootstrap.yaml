@@ -16,16 +16,14 @@ limitations under the License.
 
 {{- if .Values.manifests.job_bootstrap }}
 {{- $envAll := . }}
-
-{{- $cephConfHashStringSuffix := $envAll.Values.conf.ceph | toYaml | sha256sum | trunc 8 }}
-
+{{- $jobRandomSuffix := randAlphaNum 6 | lower }}
 {{- $serviceAccountName := "ceph-bootstrap"}}
 {{ tuple $envAll "bootstrap" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ceph-bootstrap-{{ $cephConfHashStringSuffix }}
+  name: ceph-bootstrap-{{ $jobRandomSuffix }}
   labels:
 {{ tuple $envAll "ceph" "bootstrap" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:

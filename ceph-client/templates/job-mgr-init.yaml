@@ -16,16 +16,14 @@ limitations under the License.
 
 {{- if and .Values.manifests.job_mgr_init (and .Values.deployment.ceph (has "dashboard" .Values.conf.mgr.modules)) }}
 {{- $envAll := . }}
-
-{{- $mgrDashboardInitHashStringSuffix := tuple "bin/mgr/_init.sh.tpl" . | include "helm-toolkit.utils.template" | sha256sum | trunc 8 }}
-
+{{- $jobRandomSuffix := randAlphaNum 6 | lower }}
 {{- $serviceAccountName := "ceph-mgr-init" }}
 {{ tuple $envAll "mgr_init" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ceph-mgr-init-{{ $mgrDashboardInitHashStringSuffix }}
+  name: ceph-mgr-init-{{ $jobRandomSuffix }}
   labels:
 {{ tuple $envAll "ceph" "mgr-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:

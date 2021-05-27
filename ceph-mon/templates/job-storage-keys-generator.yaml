@@ -16,7 +16,7 @@ limitations under the License.
 
 {{- if and .Values.manifests.job_storage_admin_keys .Values.deployment.storage_secrets }}
 {{- $envAll := . }}
-
+{{- $jobRandomSuffix := randAlphaNum 6 | lower }}
 {{- $serviceAccountName := "ceph-storage-keys-generator" }}
 {{ tuple $envAll "storage_keys_generator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
@@ -51,7 +51,7 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ceph-storage-keys-generator
+  name: ceph-storage-keys-generator-{{ $jobRandomSuffix }}
   labels:
 {{ tuple $envAll "ceph" "storage-keys-generator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:

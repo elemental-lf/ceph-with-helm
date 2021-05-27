@@ -16,10 +16,11 @@ limitations under the License.
 
 {{- if and .Values.manifests.job_keyring .Values.deployment.storage_secrets }}
 {{- $envAll := . }}
+{{- $jobRandomSuffix := randAlphaNum 6 | lower }}
 {{- range $cephKey, $secretName := .Values.secrets.keyrings }}
-{{- $jobName := print $cephKey "-key-generator" | replace "." "-" }}
+{{- $jobName := print ($cephKey | replace "." "-") "-key-generator"  | trunc 56 }}
 
-{{- $serviceAccountName := print "ceph-" $jobName }}
+{{- $serviceAccountName := print "ceph-" ($cephKey | replace "." "-") "-key-generator" | trunc 63 }}
 {{ tuple $envAll "job_key_generator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -53,7 +54,7 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ceph-{{ $jobName }}
+  name: ceph-{{ $jobName }}-{{ $jobRandomSuffix }}
   labels:
 {{ tuple $envAll "ceph" $jobName | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:

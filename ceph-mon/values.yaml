@@ -730,28 +730,48 @@ dependencies:
       jobs: null
     mon:
       jobs:
-        - ceph-client-admin-key-generator
-        - ceph-client-bootstrap-mds-key-generator
-        - ceph-client-bootstrap-mgr-key-generator
-        - ceph-client-bootstrap-osd-key-generator
-        - ceph-client-bootstrap-rbd-key-generator
-        - ceph-client-bootstrap-rgw-key-generator
-        - ceph-mon-key-generator
+        - labels:
+            application: ceph
+            component: client-admin-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-mds-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-mgr-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-osd-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-rbd-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-rgw-key-generator
+        - labels:
+            application: ceph
+            component: mon-key-generator
     moncheck:
       jobs:
-        - ceph-mon-key-generator
+        - labels:
+            application: ceph
+            component: mon-key-generator
       services:
         - endpoint: discovery
           service: ceph_mon
     osd:
       jobs:
-        - ceph-client-bootstrap-osd-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-osd-key-generator
       services:
         - endpoint: internal
           service: ceph_mon
     storage_keys_generator:
       jobs:
-        - ceph-client-admin-key-generator
+        - labels:
+            application: ceph
+            component: client-admin-key-generator
     cephfs_client_key_generator:
       jobs: null
     cephfs_provisioner:
@@ -764,7 +784,9 @@ dependencies:
           service: ceph_mon
     mds:
       jobs:
-        - name: ceph-client-bootstrap-mds-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-mds-key-generator
         - labels:
             application: ceph
             component: rbd-pool
@@ -773,7 +795,9 @@ dependencies:
           service: ceph_mon
     mgr:
       jobs:
-        - ceph-client-bootstrap-mgr-key-generator
+        - labels:
+            application: ceph
+            component: client-bootstrap-mgr-key-generator
       services:
         - endpoint: internal
           service: ceph_mon
