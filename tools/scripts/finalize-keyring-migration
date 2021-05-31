@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# This script finalizes the restructuring of the keyring secrets by deleting the old field containing
+# the keyring. The keyring is now always stored in the field "keyring", so after the migration there
+# no longer are three different field names containing the keyring but only one.
+#
+
+set -euo pipefail
+
+declare -r NAMESPACE=ceph
+
+for secret in ceph-bootstrap-mds-keyring ceph-bootstrap-mgr-keyring ceph-bootstrap-osd-keyring ceph-bootstrap-rbd-keyring \
+  ceph-bootstrap-rgw-keyring; do
+  kubectl -n "${NAMESPACE}" patch secret "$secret" --type=json -p='[
+    {"op": "remove", "path": "/data/ceph.keyring"}
+  ]'
+done
+
+kubectl -n "${NAMESPACE}" patch secret ceph-client-admin-keyring --type=json -p='[
+  {"op": "remove", "path": "/data/ceph.client.admin.keyring"}
+]'
+
+kubectl -n "${NAMESPACE}" patch secret ceph-mon-keyring --type=json -p='[
+  {"op": "remove", "path": "/data/ceph.mon.keyring"}
+]'
