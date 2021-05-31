@@ -43,5 +43,27 @@ data:
   key: $(echo -n "$CEPH_KEY" | base64 -w0)
   keyring: $(kube_ceph_keyring_gen "${CEPH_KEY}" "${CEPH_KEYRING_TEMPLATE}")
 EOF
-fi
+else
+  CURRENT_CEPH_USER="$(kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secret ${KUBE_SECRET_NAME} -o jsonpath='{.data.user}')"
+  CURRENT_CEPH_KEY="$(kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secret ${KUBE_SECRET_NAME} -o jsonpath='{.data.key}')"
+  CURRENT_CEPH_KEYRING="$(kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secret ${KUBE_SECRET_NAME} -o jsonpath='{.data.keyring}')"
 
+  if [[ -z $CURRENT_CEPH_USER || -z $CURRENT_CEPH_KEY || -z $CURRENT_CEPH_KEYRING ]]; then
+    CURRENT_CEPH_KEYRING="$(kubectl get --namespace ${DEPLOYMENT_NAMESPACE} secret ${KUBE_SECRET_NAME} -o json | jq -r '.data."ceph.keyring" // .data."ceph.client.admin.keyring" // .data."ceph.mon.keyring"' | base64 -d)"
+    if [[ -z $CURRENT_CEPH_KEYRING ]]; then
+      echo "ERROR- Unable to extract current legacy keyring from secret ${KUBE_SECRET_NAME}"
+      echo "ERROR- Not patching secret."
+      exit 1
+    fi
+
+    CURRENT_CEPH_KEY="$(sed -e '2q;d' <<<"${CURRENT_CEPH_KEYRING}" | sed -e 's/^[     ]\+key[         ]\+=[   ]\+\(.\+\)$/\1/')"
+
+    kubectl patch --namespace ${DEPLOYMENT_NAMESPACE} secret ${KUBE_SECRET_NAME} -p "{
+      \"data\": {
+        \"user\": \"$(echo -n "$CEPH_USER" | base64 -w0)\",
+        \"key\": \"$(echo -n "$CURRENT_CEPH_KEY" | base64 -w0)\",
+        \"keyring\": \"$(echo "$CURRENT_CEPH_KEYRING" | base64 -w0)\"
+      }
+    }"
+  fi
+fi
