@@ -1,9 +1,9 @@
-FROM docker.io/ceph/daemon-base:v5.0.9-stable-5.0-octopus-centos-8-x86_64
+FROM docker.io/ceph/daemon-base:v5.0.11-stable-5.0-octopus-centos-8-x86_64
 
-LABEL version="5.0.9-octopus-k8s-1.19.9-rev-1"
+LABEL version="5.0.11-octopus-k8s-1.19.11-rev-1"
 LABEL maintainer="lf@elemental.net"
 
-ARG KUBECTL_VERSION=v1.19.9
+ARG KUBECTL_VERSION=v1.19.11
 
 RUN set -ex && \
     yum install -y epel-release && \
