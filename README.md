@@ -70,4 +70,17 @@ people.) Since then some things have diverged considerably. Notable differences 
     means if they reside outside of the chart. After the new operator is operational it will recreate all OSD pods. 
     It is advisable  to mark all OSDs as `noout` for the time of the upgrade to prevent any unwanted data shuffling.
 
-Commits between these milestone should be mostly bug fixes and minor other changes.
+* `milestone-5`: This is major update and brings Ceph to version 15 (Octopus)
+    * Updates `ceph-container` to 5.0.11 which includes Ceph 15.2.12.
+    * Updates cephfs-provisioner and rbd-provisioner to 0.8.0. This update was needed so that the provisioners will work
+      with Kubernetes 1.20..
+    * Adapts Python scripts to work with Pyhton 3.
+    * Adds an option to deploy the Ceph dashboard.
+    * Changes the structure of the keyring secrets. Old keyring secrets will be migrated to the new format but are
+      still compatible with the old format. To finalize the migration the script `tools/scripts/finalize-keyring-migration`
+      is provided. After running the script the secrets are no longer compatible with the old format.
+    * Adds two new secrets which are by default named `ceph-csi-rbd` and `ceph-csi-cephfs`. These secrets can be 
+      referenced by Ceph CSI compatible storage classes. The Ceph CSI deployments for RBD and CephFS need to be
+      implemented outside of `ceph-with-helm` for example with the official Helm charts of the Ceph CSI project.
+      **Support for legacy (i.e. non-CSI-based) volumes will be removed in a future version.**
+    * Migrates the installed Ingress resources from API version `networking.k8s.io/v1beta1` to `networking.k8s.io/v1`.
