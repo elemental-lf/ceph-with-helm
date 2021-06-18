@@ -42,7 +42,7 @@ images:
     ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.8.0'
     #
     dep_check: 'quay.io/airshipit/kubernetes-entrypoint:v1.0.0'
-    ceph_config_helper: 'elementalnet/ceph-config-helper:5.0.12-octopus-k8s-1.20.10-rev-1'
+    ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:5.0.12-octopus-k8s-1.19.11-rev-1'
     ceph_osd_operator: 'ghcr.io/elemental-lf/ceph-osd-operator:0.3.1'
   local_registry:
     active: false
