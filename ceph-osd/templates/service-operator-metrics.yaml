@@ -1,0 +1,19 @@
+{{- if .Values.manifests.deployment_osd_operator }}
+{{- $envAll := . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ceph-osd-operator-controller-manager-metrics-service
+  annotations:
+{{- if .Values.monitoring.prometheus.enabled }}
+{{ tuple $envAll.Values.monitoring.prometheus.ceph_osd_operator | include "helm-toolkit.snippets.prometheus_service_annotations" | indent 4 }}
+{{- end }}
+spec:
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: {{ tuple "ceph_osd_operator" "internal" "metrics" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+  selector:
+{{ tuple $envAll "ceph" "osd-operator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+{{- end }}

@@ -39,6 +39,7 @@ spec:
       hostPID: true
       dnsPolicy: {{ .Values.pod.dns_policy }}
       priorityClassName: {{ $serviceAccountName }}
+      terminationGracePeriodSeconds: 30
       initContainers:
 {{ tuple $envAll "osd" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
         - name: init-dirs
@@ -154,7 +155,6 @@ spec:
               exec:
                 command:
                   - /tmp/osd-stop.sh
-          terminationGracePeriodSeconds: 300
           livenessProbe:
            exec:
             command:
