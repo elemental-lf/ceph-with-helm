@@ -43,7 +43,7 @@ images:
     #
     dep_check: 'quay.io/airshipit/kubernetes-entrypoint:v1.0.0'
     ceph_config_helper: 'docker.io/elementalnet/ceph-config-helper:5.0.11-octopus-k8s-1.19.11-rev-1'
-    ceph_osd_operator: 'docker.io/elementalnet/ceph-osd-operator:0.2.0'
+    ceph_osd_operator: 'ghcr.io/elemental-lf/ceph-osd-operator:0.3.1'
   local_registry:
     active: false
     exclude: []
@@ -151,17 +151,11 @@ pod:
           readOnlyRootFilesystem: true
     osd_operator:
       pod:
-        # This is the user ansible-operator inside of the container.
-        runAsUser: 1001
+        runAsNonRoot: true
       container:
-        ansible:
+        manager:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-        operator:
-          allowPrivilegeEscalation: false
-          # The image writes to /etc/passwd :(
-          # See https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
-          readOnlyRootFilesystem: false
 
     # ceph-client
     mds:
@@ -335,14 +329,7 @@ pod:
       limits:
         memory: "1024Mi"
         cpu: "1000m"
-    osd_operator_ansible:
-      requests:
-        memory: "5Mi"
-        cpu: "250m"
-      limits:
-        memory: "50Mi"
-        cpu: "500m"
-    osd_operator_operator:
+    osd_operator_manager:
       requests:
         memory: "5Mi"
         cpu: "250m"
@@ -880,13 +867,20 @@ endpoints:
       api:
         default: 8088
         public: 80
-        
+  ceph_osd_operator:
+    port:
+      metrics:
+        default: 8080
+
 monitoring:
   prometheus:
     enabled: true
     ceph_mgr:
       scrape: true
       port: 9283
+    ceph_osd_operator:
+      scrape: true
+      port: 8080
 
 manifests:
   # ceph-mon
