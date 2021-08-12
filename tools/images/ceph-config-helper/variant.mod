@@ -19,4 +19,4 @@ dependencies:
     releasesFrom:
       githubReleases:
         source: kubernetes/kubernetes
-    version: "~> 1.19.0"
+    version: "~> 1.20.0"
