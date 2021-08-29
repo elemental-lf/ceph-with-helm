@@ -20,8 +20,7 @@ set -ex
 export LC_ALL=C
 
 : "${ADMIN_KEYRING:=/etc/ceph/${CLUSTER}.client.admin.keyring}"
-: "${OSD_TARGET_PGS:=100}"
-: "${QUANTITY_OSDS:=15}"
+: "${PG_NUM_MIN:=32}"
 
 if [[ ! -e /etc/ceph/${CLUSTER}.conf ]]; then
   echo "ERROR- /etc/ceph/${CLUSTER}.conf must exist; get it from your existing mon"
@@ -38,21 +37,22 @@ if ! ceph --cluster "${CLUSTER}" osd crush rule ls | grep -q "^same_host$"; then
 fi
 
 function create_pool () {
-  POOL_APPLICATION=$1
-  POOL_NAME=$2
-  POOL_REPLICATION=$3
-  POOL_PLACEMENT_GROUPS=$4
-  POOL_CRUSH_RULE=$5
-  POOL_EC_PROFILE_SPEC=$6
+  POOL_APPLICATION="$1"
+  POOL_NAME="$2"
+  POOL_REPLICATION="$3"
+  TOTAL_DATA_PERCENT="$4"
+  POOL_CRUSH_RULE="$5"
+  POOL_EC_PROFILE_SPEC="$6"
+
   if ! ceph --cluster "${CLUSTER}" osd pool stats "${POOL_NAME}" > /dev/null 2>&1; then
     if [ -z "$POOL_EC_PROFILE_SPEC" ]; then
-      ceph --cluster "${CLUSTER}" osd pool create "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS}
+      ceph --cluster "${CLUSTER}" osd pool create --pg-num-min "${PG_NUM_MIN}" "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS}
     else
       if ! ceph --cluster "${CLUSTER}" osd erasure-code-profile ls | grep -q "^${POOL_NAME}$"; then
         ceph --cluster "${CLUSTER}" osd erasure-code-profile set "${POOL_NAME}" $POOL_EC_PROFILE_SPEC
       fi
       # This will also implicitly create the corresponding crush rule (named after the pool, too)
-      ceph --cluster "${CLUSTER}" osd pool create "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS} ${POOL_PLACEMENT_GROUPS} erasure ${POOL_NAME}
+      ceph --cluster "${CLUSTER}" osd pool create --pg-num-min "${PG_NUM_MIN}" "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS} ${POOL_PLACEMENT_GROUPS} erasure ${POOL_NAME}
     fi
     while [ $(ceph --cluster "${CLUSTER}" -s | grep creating -c) -gt 0 ]; do echo -n .;sleep 1; done
     if [ "x${POOL_NAME}" == "xrbd" ]; then
@@ -60,30 +60,14 @@ function create_pool () {
     fi
     ceph --cluster "${CLUSTER}" osd pool application enable "${POOL_NAME}" "${POOL_APPLICATION}"
   fi
+
   # Only do this for replicated pools
   if [ -z "$POOL_EC_PROFILE_SPEC" ]; then
     ceph --cluster "${CLUSTER}" osd pool set "${POOL_NAME}" size ${POOL_REPLICATION}
     ceph --cluster "${CLUSTER}" osd pool set "${POOL_NAME}" crush_rule "${POOL_CRUSH_RULE}"
   fi
-  for PG_PARAM in pg_num pgp_num; do
-    CURRENT_PG_VALUE=$(ceph --cluster ceph osd pool get "${POOL_NAME}" "${PG_PARAM}" | awk "/^${PG_PARAM}:/ { print \$NF }")
-    if [ "${POOL_PLACEMENT_GROUPS}" -gt "${CURRENT_PG_VALUE}" ]; then
-      ceph --cluster ceph osd pool set "${POOL_NAME}" "${PG_PARAM}" "${POOL_PLACEMENT_GROUPS}"
-    fi
-  done
-}
 
-function manage_pool () {
-  POOL_APPLICATION=$1
-  POOL_NAME=$2
-  POOL_REPLICATION=$3
-  TOTAL_OSDS=$4
-  TOTAL_DATA_PERCENT=$5
-  TARGET_PG_PER_OSD=$6
-  POOL_CRUSH_RULE=$7
-  POOL_EC_PROFILE_SPEC=$8
-  POOL_PLACEMENT_GROUPS=$(/tmp/pool-calc.py ${POOL_REPLICATION} ${TOTAL_OSDS} ${TOTAL_DATA_PERCENT} ${TARGET_PG_PER_OSD})
-  create_pool "${POOL_APPLICATION}" "${POOL_NAME}" "${POOL_REPLICATION}" "${POOL_PLACEMENT_GROUPS}" "${POOL_CRUSH_RULE}" "$POOL_EC_PROFILE_SPEC"
+  ceph --cluster "${CLUSTER}" osd pool set "${POOL_NAME}" target_size_ratio "${TOTAL_DATA_PERCENT}"
 }
 
 function wait_for_inactive_pgs () {
@@ -94,12 +78,10 @@ function wait_for_inactive_pgs () {
   done
 }
 
-{{ $targetNumOSD := .Values.conf.pool.target.osd }}
-{{ $targetPGperOSD := .Values.conf.pool.target.pg_per_osd }}
 {{ $crushRuleDefault := .Values.conf.pool.default.crush_rule }}
 {{- range $pool := .Values.conf.pool.spec -}}
 {{- with $pool }}
-manage_pool {{ .application }} {{ .name }} {{ .replication }} {{ $targetNumOSD }} {{ .percent_total_data }} {{ $targetPGperOSD }} {{ .crush_rule | default $crushRuleDefault }} "{{ .ec_profile_spec | default "" }}"
+create_pool '{{ .application }}' '{{ .name }}' '{{ .replication }}' '{{ .percent_total_data }}' '{{ .crush_rule | default $crushRuleDefault }}' '{{ .ec_profile_spec | default "" }}'
 {{- end }}
 {{- end }}
 

@@ -27,8 +27,6 @@ data:
 
   pool-init.sh: |
 {{ tuple "bin/pool/_init.sh.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
-  pool-calc.py: |
-{{ tuple "bin/pool/_calc.py.tpl" . | include  "helm-toolkit.utils.template" | indent 4 }}
 
   mds-start.sh: |
 {{ tuple "bin/mds/_start.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
