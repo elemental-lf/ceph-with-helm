@@ -498,6 +498,7 @@ conf:
     osd:
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
+      # Auto-repair is safe with BlueStore as all data is checksummed.
       osd_scrub_auto_repair: true
     mds:
       ms_bind_port_min: 7101
