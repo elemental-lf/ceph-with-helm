@@ -195,7 +195,7 @@ spec:
       containers:
         - name: manager
 {{ tuple $envAll "ceph_osd_operator" | include "helm-toolkit.snippets.image" | indent 10 }}
-{{ tuple $envAll $envAll.Values.pod.resources.osd_operator_operator | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ tuple $envAll $envAll.Values.pod.resources.osd_operator_manager | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
 {{ dict "envAll" $envAll "application" "osd_operator" "container" "manager" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           args:
             - --leader-elect
