@@ -301,95 +301,108 @@ pod:
             max_unavailable: 1
   resources:
     enabled: false
+    # No limit set here as it depends on cluster size.
     mon:
       requests:
-        memory: "50Mi"
+        memory: "1536Mi"
         cpu: "250m"
       limits:
-        memory: "100Mi"
-        cpu: "500m"
+        memory: ""
+        cpu: ""
     mon_check:
       requests:
-        memory: "5Mi"
-        cpu: "250m"
+        memory: "1Mi"
+        cpu: "50m"
       limits:
-        memory: "50Mi"
-        cpu: "500m"
+        memory: "512Mi"
+        cpu: "250m"
+    # Neither request nor limit set here as they depend on OSD cache size and other factors.
     osd:
       requests:
-        memory: "512Mi"
-        cpu: "500m"
+        memory: ""
+        cpu: ""
       limits:
-        memory: "1024Mi"
-        cpu: "1000m"
+        memory: ""
+        cpu: ""
     osd_maint:
       requests:
         memory: "512Mi"
-        cpu: "500m"
+        cpu: "250m"
       limits:
-        memory: "1024Mi"
-        cpu: "1000m"
+        memory: "4096Mi"
+        cpu: "2000m"
     osd_operator_manager:
       requests:
-        memory: "5Mi"
-        cpu: "250m"
-      limits:
-        memory: "50Mi"
-        cpu: "500m"
-    mds:
-      requests:
-        memory: "10Mi"
-        cpu: "250m"
-      limits:
-        memory: "50Mi"
-        cpu: "500m"
-    mgr:
-      requests:
-        memory: "5Mi"
-        cpu: "250m"
-      limits:
-        memory: "50Mi"
-        cpu: "500m"
-    rbd_provisioner:
-      requests:
-        memory: "5Mi"
-        cpu: "250m"
-      limits:
-        memory: "50Mi"
-        cpu: "500m"
-    cephfs_provisioner:
-      requests:
-        memory: "5Mi"
-        cpu: "250m"
-      limits:
-        memory: "50Mi"
-        cpu: "500m"
-    rgw:
-      requests:
-        memory: "128Mi"
-        cpu: "250m"
+        memory: "256Mi"
+        cpu: "750m"
       limits:
         memory: "512Mi"
+        cpu: "2000m"
+    # Neither request nor limit set here as they depend on cluster size and cephfs usage.
+    mds:
+      requests:
+        memory: ""
+        cpu: ""
+      limits:
+        memory: ""
+        cpu: ""
+    # No limit set here as it depends on cluster size.
+    mgr:
+      requests:
+        memory: "1024Mi"
+        cpu: "250m"
+      limits:
+        memory: ""
+        cpu: ""
+    rbd_provisioner:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "256Mi"
         cpu: "1000m"
+    cephfs_provisioner:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "256Mi"
+        cpu: "1000m"
+    rgw:
+      requests:
+        memory: ""
+        cpu: ""
+      limits:
+        memory: ""
+        cpu: ""
+    # Ensure that the requested amounts are equal to the limits, otherwise Kubernetes won't use the Guaranteed qos
+    # class for a pod using kubernetes-entrypoint even if all other containers specify matching limits.
+    kubernetes_entrypoint:
+      requests:
+        memory: "50Mi"
+        cpu: "500m"
+      limits:
+        memory: "50Mi"
+        cpu: "500m"
     jobs:
       bootstrap:
+        requests:
+          memory: "128Mi"
+          cpu: "250m"
         limits:
           memory: "1024Mi"
           cpu: "2000m"
-        requests:
-          memory: "128Mi"
-          cpu: "500m"
       secret_provisioning:
+        requests:
+          memory: "128Mi"
+          cpu: "250m"
         limits:
           memory: "1024Mi"
           cpu: "2000m"
-        requests:
-          memory: "128Mi"
-          cpu: "500m"
       rgw_s3_admin:
         requests:
           memory: "128Mi"
-          cpu: "100m"
+          cpu: "250m"
         limits:
           memory: "1024Mi"
           cpu: "2000m"

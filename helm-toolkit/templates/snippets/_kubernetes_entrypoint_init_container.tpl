@@ -158,6 +158,7 @@ Values:
 {{- $patchedEnvAll := mergeOverwrite $default_security_context $envAll }}
 - name: kubernetes-entrypoint
 {{ tuple $envAll "dep_check" | include "helm-toolkit.snippets.image" | indent 2 }}
+{{ tuple $envAll $envAll.Values.pod.resources.kubernetes_entrypoint | include "helm-toolkit.snippets.kubernetes_resources" | indent 2 }}
 {{- dict "envAll" $patchedEnvAll "application" "kubernetes_entrypoint" "container" "kubernetes_entrypoint" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 2 }}
   env:
     - name: POD_NAME
