@@ -934,5 +934,4 @@ manifests:
   job_s3_admin: true
   secret_s3_rgw: true
   secret_ingress_tls: true
-  service_ingress_rgw: true
   service_rgw: true
