@@ -256,6 +256,7 @@ pod:
     cephfs_provisioner: 2
     rbd_provisioner: 2
     rgw: 2
+    rgw_website: 2
   lifecycle:
     upgrades:
       deployments:
@@ -517,6 +518,10 @@ conf:
     mds:
       ms_bind_port_min: 7101
       ms_bind_port_max: 7300
+    client.rgw.api:
+      rgw_enable_static_website: true
+    client.rgw.website:
+      rgw_enable_apis: s3website
   cephfs_provisioner:
     use_pvc_namespace_for_secrets: true
   rbd_provisioner:
@@ -878,6 +883,29 @@ endpoints:
       api:
         default: 8088
         public: 80
+  ceph_object_store_website:
+    name: ceph-rgw-website
+    namespace: null
+    hosts:
+      default: ceph-rgw-website
+      public: ceph-rgw-website
+    host_fqdn_override:
+      default: null
+      # NOTE(portdirect): this chart supports TLS for fqdn over-ridden public
+      # endpoints using the following format:
+      # public:
+      #   host: null
+      #   tls:
+      #     crt: null
+      #     key: null
+    path:
+      default: null
+    scheme:
+      default: http
+    port:
+      api:
+        default: 8088
+        public: 80
   ceph_osd_operator:
     port:
       metrics:
@@ -930,8 +958,11 @@ manifests:
   # ceph-rgw
   configmap_rgw_bin: true
   deployment_rgw: true
+  deployment_rgw_website: true
   ingress_rgw: true
+  ingress_rgw_website: true
   job_s3_admin: true
   secret_s3_rgw: true
   secret_ingress_tls: true
   service_rgw: true
+  service_rgw_website: true

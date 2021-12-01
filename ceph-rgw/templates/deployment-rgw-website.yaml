@@ -14,28 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and .Values.manifests.deployment_rgw ( and .Values.deployment.ceph .Values.conf.features.rgw ) }}
+{{- if and .Values.manifests.deployment_rgw_website ( and .Values.deployment.ceph .Values.conf.features.rgw ) }}
 {{- $envAll := . }}
 
-{{- $serviceAccountName := "ceph-rgw"}}
+{{- $serviceAccountName := "ceph-rgw-website"}}
 {{ tuple $envAll "rgw" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: ceph-rgw
+  name: ceph-rgw-website
   labels:
 {{ tuple $envAll "ceph" "rgw" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 spec:
-  replicas: {{ .Values.pod.replicas.rgw }}
+  replicas: {{ .Values.pod.replicas.rgw_website }}
   selector:
     matchLabels:
-{{ tuple $envAll "ceph" "rgw" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
+{{ tuple $envAll "ceph" "rgw-website" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
 {{ tuple $envAll "rgw" | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
   template:
     metadata:
       labels:
-{{ tuple $envAll "ceph" "rgw" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+{{ tuple $envAll "ceph" "rgw-website" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
       annotations:
         configmap-bin-hash: {{ tuple "configmap-bin.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
@@ -56,7 +56,7 @@ spec:
             - name: CLUSTER
               value: "ceph"
             - name: RGW_NAME
-              value: "api"
+              value: "website"
           volumeMounts:
             - name: pod-tmp
               mountPath: /tmp
@@ -82,20 +82,18 @@ spec:
             - name: RGW_FRONTEND_PORT
               value: "{{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}"
             - name: RGW_NAME
-              value: "api"
+              value: "website"
           command:
             - /tmp/rgw-start.sh
           ports:
             - containerPort: {{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
           livenessProbe:
-              httpGet:
-                path: /
+              tcpSocket:
                 port: {{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
               initialDelaySeconds: 120
               timeoutSeconds: 5
           readinessProbe:
-              httpGet:
-                path: /
+              tcpSocket:
                 port: {{ tuple "ceph_object_store" "internal" "api" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
               timeoutSeconds: 5
           volumeMounts:
