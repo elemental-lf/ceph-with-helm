@@ -31,12 +31,12 @@ images:
   image_pull_secrets: []
   tags:
     # See https://github.com/ceph/ceph-container for tags
-    ceph_bootstrap:          'docker.io/ceph/daemon:v6.0.4-stable-6.0-pacific-centos-8-x86_64'
-    ceph_mon:                'docker.io/ceph/daemon:v6.0.4-stable-6.0-pacific-centos-8-x86_64'
-    ceph_osd:                'docker.io/ceph/daemon:v6.0.4-stable-6.0-pacific-centos-8-x86_64'
-    ceph_mgr:                'docker.io/ceph/daemon:v6.0.4-stable-6.0-pacific-centos-8-x86_64'
-    ceph_mds:                'docker.io/ceph/daemon:v6.0.4-stable-6.0-pacific-centos-8-x86_64'
-    ceph_rgw:                'docker.io/ceph/daemon:v6.0.4-stable-6.0-pacific-centos-8-x86_64'
+    ceph_bootstrap:          'quay.io/ceph/daemon:v6.0.6-stable-6.0-pacific-centos-8-x86_64'
+    ceph_mon:                'quay.io/ceph/daemon:v6.0.6-stable-6.0-pacific-centos-8-x86_64'
+    ceph_osd:                'quay.io/ceph/daemon:v6.0.6-stable-6.0-pacific-centos-8-x86_64'
+    ceph_mgr:                'quay.io/ceph/daemon:v6.0.6-stable-6.0-pacific-centos-8-x86_64'
+    ceph_mds:                'quay.io/ceph/daemon:v6.0.6-stable-6.0-pacific-centos-8-x86_64'
+    ceph_rgw:                'quay.io/ceph/daemon:v6.0.6-stable-6.0-pacific-centos-8-x86_64'
     #
     ceph_cephfs_provisioner: 'docker.io/elementalnet/cephfs-provisioner:0.8.0'
     ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.8.0'
