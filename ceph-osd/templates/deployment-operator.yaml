@@ -191,7 +191,7 @@ spec:
       priorityClassName: {{ $serviceAccountName }}
       terminationGracePeriodSeconds: 10
       initContainers:
-{{ tuple $envAll "osd-maint" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll "osd-operator" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: manager
 {{ tuple $envAll "ceph_osd_operator" | include "helm-toolkit.snippets.image" | indent 10 }}
