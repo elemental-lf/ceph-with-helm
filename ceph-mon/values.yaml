@@ -515,6 +515,11 @@ conf:
       ms_bind_port_max: 7100
       # Auto-repair is safe with BlueStore as all data is checksummed.
       osd_scrub_auto_repair: true
+      # Enable dmclock io scheduler with the balanced profile (i.e. a balance between client und recovery io)
+      # 16.2.7 enables automatic benchmarking during started of an OSD to set osd_mclock_max_capacity_iops_[hdd,ssd],
+      # See https://github.com/ceph/ceph/pull/41731, https://github.com/ceph/ceph/pull/41308
+      osd_mclock_profile: balanced
+      osd_op_queue: mclock_scheduler
     mds:
       ms_bind_port_min: 7101
       ms_bind_port_max: 7300
@@ -767,6 +772,10 @@ dependencies:
         - labels:
             application: ceph
             component: client-bootstrap-osd-key-generator
+        # This ensures that configuration options that affect on OSDs are properly set before starting the OSD.
+        - labels:
+            application: ceph
+            component: bootstrap
       services:
         - endpoint: internal
           service: ceph_mon
