@@ -25,10 +25,6 @@ function extract_cluster_fsid {
   python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["tags"]["ceph.cluster_fsid"]);'
 }
 
-# Make sure all device files are there
-udevadm trigger
-udevadm settle --timeout=600
-
 if [ -z "${OSD_DEVICE}" ]; then
   echo "ERROR- You must provide a device to build your OSD in OSD_DEVICE."
   exit 1
@@ -96,5 +92,3 @@ if [ -n "$OSD_WAL_DEVICE" ]; then
 fi
 
 ceph-volume lvm prepare --bluestore --no-systemd ${CLI_OPTS} --data "${OSD_DEVICE}"
-
-udevadm settle --timeout=600

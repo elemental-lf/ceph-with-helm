@@ -54,9 +54,6 @@ fi
 # ensure that all LVM2 symbolic links are present
 vgscan --mknodes
 
-# watch the udev event queue, and exit if all current events are handled
-udevadm settle --timeout=600
-
 CEPH_VOLUME_LVM_LIST="$(ceph-volume lvm list --format json "${OSD_DEVICE}")"
 if [[ -z ${CEPH_VOLUME_LVM_LIST} || ${CEPH_VOLUME_LVM_LIST} == "{}" ]]; then
   echo "ERROR- The device $OSD_DEVICE doesn't look like an OSD device."
@@ -74,7 +71,6 @@ if [ -z "${LVM2_VG_NAME}" ]; then
 fi
 
 lvchange -ay "${LVM2_VG_NAME}/${OSD_LV_NAME}"
-udevadm settle --timeout=600
 ceph-volume lvm activate --bluestore --no-systemd "${OSD_ID}" "${OSD_FSID}"
 
 OSD_PATH="${OSD_PATH_BASE}-${OSD_ID}"
