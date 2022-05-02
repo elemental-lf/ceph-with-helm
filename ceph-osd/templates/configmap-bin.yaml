@@ -45,6 +45,10 @@ data:
       backup = 0
       archive = 0
     }
+    activation {
+      udev_sync = 0
+      udev_rules = 0
+    }
 
   sudoers.d-ceph-osd-smartctl: |
     ## allow ceph-osd (which runs as user ceph) to collect device health metrics
