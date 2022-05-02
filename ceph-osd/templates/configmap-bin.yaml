@@ -46,15 +46,6 @@ data:
       archive = 0
     }
 
-  # The following two are workarounds for a bug in ceph-osd present in at least 14.2.5 and below.
-  # Octopus when it comes out should have the fixes and maybe they will be backported.
-  # This workaround won't be a problem if used together with a fixed ceph-osd as it will also
-  # mask all bits apart from the first two just like below.
-  smartctl: |
-    #!/bin/bash
-    /usr/sbin/smartctl "$@"
-    exit $[$? & 3]
-
   sudoers.d-ceph-osd-smartctl: |
     ## allow ceph-osd (which runs as user ceph) to collect device health metrics
     Defaults exempt_group = ceph
