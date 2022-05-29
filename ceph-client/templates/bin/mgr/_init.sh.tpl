@@ -67,8 +67,9 @@ echo -n '{{ .Values.conf.rgw_s3.auth.admin.secret_key }}' >/tmp/rgw-api-secret-k
 ceph --cluster "${CLUSTER}" dashboard set-rgw-api-access-key -i /tmp/rgw-api-access-key
 ceph --cluster "${CLUSTER}" dashboard set-rgw-api-secret-key -i /tmp/rgw-api-secret-key
 rm -f /tmp/rgw-api-access-key /tmp/rgw-api-secret-key
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-host ceph-rgw
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-port '{{ tuple "ceph_object_store" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}'
+# The following two are not supported by Octopus and above
+ceph --cluster "${CLUSTER}" dashboard set-rgw-api-host ceph-rgw || true
+ceph --cluster "${CLUSTER}" dashboard set-rgw-api-port '{{ tuple "ceph_object_store" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}' || true
 {{- end }}
 
 {{- if .Values.conf.mgr.dashboard.users }}
