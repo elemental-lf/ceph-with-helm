@@ -1,0 +1,70 @@
+---
+name: Test, build and release container image
+
+on:
+  push:
+    branches:
+      - master
+      - update-quincy
+
+jobs:
+  #
+  # Job: cancel
+  #
+  cancel:
+    name: "Cancel previous workflow runs"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: styfle/cancel-workflow-action@0.11.0
+        with:
+          workflow_id: release.yaml
+          access_token: ${{ github.token }}
+
+  #
+  # Job: test_build_release_image
+  #
+  test_build_release_image:
+    name: "Test, build and release the container image"
+    needs:
+      - cancel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository files
+        uses: actions/checkout@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PAT }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build image
+        shell: bash
+        run: |
+          make -C images/ceph build
+
+      - name: Determine image version
+        id: image_info
+        shell: bash
+        run: |
+          set -ueo pipefail
+
+          version="$(make -sC images/ceph version)"
+          echo "::debug::Setting version to ${version}"
+          echo "::set-output name=version::${version}"
+
+      # Will reuse the build cache
+      - name: Push container image
+        uses: docker/build-push-action@v3
+        with:
+          context: images/ceph
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/ceph:latest
+            ghcr.io/${{ github.repository_owner }}/ceph:${{ steps.image_info.outputs.version }}
