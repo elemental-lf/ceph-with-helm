@@ -17,7 +17,7 @@ SHELL := /bin/bash
 HELM  := helm
 TASK  := build
 
-EXCLUDES := tools
+EXCLUDES := images scripts
 CHARTS := $(filter-out $(EXCLUDES), $(patsubst %/.,%,$(wildcard */.)))
 
 .PHONY: $(EXCLUDES) $(CHARTS)
