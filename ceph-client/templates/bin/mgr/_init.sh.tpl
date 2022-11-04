@@ -61,15 +61,8 @@ ceph --cluster "${CLUSTER}" config set mgr mgr/dashboard/standby_behaviour error
 ceph --cluster "${CLUSTER}" config set mgr mgr/dashboard/standby_error_status_code 503 --force
 
 {{- if and .Values.conf.features.rgw .Values.conf.rgw_s3.enabled }}
-# FIXME: This is ugly and insecure.
-echo -n '{{ .Values.conf.rgw_s3.auth.admin.access_key }}' >/tmp/rgw-api-access-key
-echo -n '{{ .Values.conf.rgw_s3.auth.admin.secret_key }}' >/tmp/rgw-api-secret-key
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-access-key -i /tmp/rgw-api-access-key
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-secret-key -i /tmp/rgw-api-secret-key
-rm -f /tmp/rgw-api-access-key /tmp/rgw-api-secret-key
-# The following two are not supported by Octopus and above
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-host ceph-rgw || true
-ceph --cluster "${CLUSTER}" dashboard set-rgw-api-port '{{ tuple "ceph_object_store" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}' || true
+# This will create an RGW user with uid dashboard for each realm in the system.
+ceph dashboard set-rgw-credentials
 {{- end }}
 
 {{- if .Values.conf.mgr.dashboard.users }}
