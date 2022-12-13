@@ -43,7 +43,7 @@ images:
     #
     dep_check: 'quay.io/airshipit/kubernetes-entrypoint:v1.0.0'
     ceph_config_helper: 'ghcr.io/elemental-lf/ceph:17.2.5-k8s-1.25.3-rev-1'
-    ceph_osd_operator: 'ghcr.io/elemental-lf/ceph-osd-operator:0.5.0'
+    ceph_osd_operator: 'ghcr.io/elemental-lf/ceph-osd-operator:0.6.0'
   local_registry:
     active: false
     exclude: []
