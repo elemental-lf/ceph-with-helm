@@ -510,6 +510,8 @@ conf:
       # Has to be quoted, otherwise "on" is interpreted as boolean true
       osd_pool_default_pg_autoscale_mode: "on"
       device_failure_prediction_mode: local
+    mon:
+      auth_allow_insecure_global_id_reclaim: false
     osd:
       ms_bind_port_min: 6800
       ms_bind_port_max: 7100
