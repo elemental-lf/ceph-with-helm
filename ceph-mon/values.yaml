@@ -534,6 +534,8 @@ conf:
   rbd_provisioner:
     # Especially rbd rm might take longer for larger images.
     command_timeout: 600 # in seconds
+  osd:
+    termination_grace_period: 60 # in seconds
   storage:
     # This configures the directory to bind mount as the device hierarchy inside of the OSD container. Outside of
     # certain special requirements this should always be /dev.
