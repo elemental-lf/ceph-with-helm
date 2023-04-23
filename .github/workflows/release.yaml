@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - master
-      - update-quincy
+      - 'update-*'
 
 jobs:
   #
