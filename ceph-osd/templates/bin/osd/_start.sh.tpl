@@ -36,19 +36,33 @@ function extract_osd_lv_name {
   python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["lv_name"]);'
 }
 
-if [ ! -e "/etc/ceph/${CLUSTER}.conf" ]; then
-  echo "ERROR- /etc/ceph/${CLUSTER}.conf must exist; get it from your existing mon"
+if [ -z "${OSD_DEVICE}" ]; then
+  echo "ERROR- OSD_DEVICE is not set."
   exit 1
 fi
 
+OSD_DEVICE="$(readlink -e ${OSD_DEVICE})"
 if [ -z "${OSD_DEVICE}" ]; then
-  echo "ERROR- You must provide a device to build your OSD ie: /dev/sdb"
+  echo "ERROR- Device ${OSD_DEVICE} pointed to by OSD_DEVICE does not exist."
   exit 1
 fi
 
 if [ ! -b "${OSD_DEVICE}" ]; then
-  echo "ERROR- The device pointed by OSD_DEVICE ($OSD_DEVICE) doesn't exist !"
+  echo "ERROR- Device ${OSD_DEVICE} pointed to by OSD_DEVICE is not a block device."
   exit 1
+fi
+
+if [ -n "${OSD_DB_DEVICE}" ]; then
+  OSD_DB_DEVICE="$(readlink -e ${OSD_DB_DEVICE})"
+  if [ -z "${OSD_DB_DEVICE}" ]; then
+    echo "ERROR- Device ${OSD_DB_DEVICE} pointed to by OSD_DB_DEVICE does not exist."
+    exit 1
+  fi
+
+  if [ ! -b "${OSD_DB_DEVICE}" ]; then
+    echo "ERROR- Device ${OSD_DB_DEVICE} pointed to by OSD_DB_DEVICE is not a block device."
+    exit 1
+  fi
 fi
 
 # ensure that all LVM2 symbolic links are present
