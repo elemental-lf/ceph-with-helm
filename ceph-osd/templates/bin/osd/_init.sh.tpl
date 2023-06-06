@@ -60,9 +60,9 @@ if [ ! -e "$OSD_BOOTSTRAP_KEYRING" ]; then
 fi
 timeout 10 ceph ${CLI_OPTS} --name client.bootstrap-osd --keyring $OSD_BOOTSTRAP_KEYRING health || exit 1
 
-CEPH_VOLUME_LVM_LIST="$(ceph-volume lvm list --format json "${OSD_DEVICE}")"
-if [[ -n ${CEPH_VOLUME_LVM_LIST} && ${CEPH_VOLUME_LVM_LIST} != "{}" ]]; then
-  DISK_CLUSTER_FSID="$(echo ${CEPH_VOLUME_LVM_LIST} | extract_cluster_fsid)"
+CEPH_VOLUME_BLOCK_LVM_LIST="$(ceph-volume lvm list --format json "${OSD_DEVICE}")"
+if [[ -n ${CEPH_VOLUME_BLOCK_LVM_LIST} && ${CEPH_VOLUME_BLOCK_LVM_LIST} != "{}" ]]; then
+  DISK_CLUSTER_FSID="$(echo ${CEPH_VOLUME_BLOCK_LVM_LIST} | extract_cluster_fsid)"
   CLUSTER_FSID="$(ceph-conf --lookup fsid)"
   if [ "${DISK_CLUSTER_FSID}" != "${CLUSTER_FSID}" ]; then
     echo "It looks like ${OSD_DEVICE} is an OSD belonging to a different (or old) ceph cluster."

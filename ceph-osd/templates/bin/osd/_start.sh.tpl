@@ -32,8 +32,8 @@ function extract_osd_fsid {
   python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["tags"]["ceph.osd_fsid"]);'
 }
 
-function extract_osd_lv_name {
-  python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["lv_name"]);'
+function extract_osd_vg_name {
+  python3 -c 'import json; import sys; input = json.load(sys.stdin); print(input[list(input.keys())[0]][0]["vg_name"]);'
 }
 
 if [ -z "${OSD_DEVICE}" ]; then
@@ -68,23 +68,26 @@ fi
 # ensure that all LVM2 symbolic links are present
 vgscan --mknodes
 
-CEPH_VOLUME_LVM_LIST="$(ceph-volume lvm list --format json "${OSD_DEVICE}")"
-if [[ -z ${CEPH_VOLUME_LVM_LIST} || ${CEPH_VOLUME_LVM_LIST} == "{}" ]]; then
+CEPH_VOLUME_BLOCK_LVM_LIST="$(ceph-volume lvm list --format json "${OSD_DEVICE}")"
+if [[ -z ${CEPH_VOLUME_BLOCK_LVM_LIST} || ${CEPH_VOLUME_BLOCK_LVM_LIST} == "{}" ]]; then
   echo "ERROR- The device $OSD_DEVICE doesn't look like an OSD device."
   exit 1
 fi
-OSD_ID="$(echo ${CEPH_VOLUME_LVM_LIST} | extract_osd_id)"
-OSD_FSID="$(echo ${CEPH_VOLUME_LVM_LIST} | extract_osd_fsid)"
-OSD_LV_NAME="$(echo ${CEPH_VOLUME_LVM_LIST} | extract_osd_lv_name)"
-# This sets LVM2_VG_NAME
-eval $(lvs -o vg_name --noheadings -S "lv_name=${OSD_LV_NAME}" --nameprefixes)
+OSD_BLOCK_VG_NAME="$(echo ${CEPH_VOLUME_BLOCK_LVM_LIST} | extract_osd_vg_name)"
+OSD_ID="$(echo ${CEPH_VOLUME_BLOCK_LVM_LIST} | extract_osd_id)"
+OSD_FSID="$(echo ${CEPH_VOLUME_BLOCK_LVM_LIST} | extract_osd_fsid)"
 
-if [ -z "${LVM2_VG_NAME}" ]; then
-  echo "ERROR- Couldn't determine volume group name for $OSD_DEVICE."
-  exit 1
+vgchange -ay "${OSD_BLOCK_VG_NAME}"
+
+if [[ -n ${OSD_DB_DEVICE} ]]; then
+  # Older versions of Ceph didn't use an LVM container for the db device, so only activate if LVM is present.
+  CEPH_VOLUME_DB_LVM_LIST="$(ceph-volume lvm list --format json "${OSD_DB_DEVICE}")"
+  if [[ -n ${CEPH_VOLUME_DB_LVM_LIST} && ${CEPH_VOLUME_DB_LVM_LIST} != "{}" ]]; then
+    OSD_DB_VG_NAME="$(echo ${CEPH_VOLUME_DB_LVM_LIST} | extract_osd_vg_name)"
+    vgchange -ay "${OSD_DB_VG_NAME}"
+  fi
 fi
 
-lvchange -ay "${LVM2_VG_NAME}/${OSD_LV_NAME}"
 ceph-volume lvm activate --bluestore --no-systemd "${OSD_ID}" "${OSD_FSID}"
 
 OSD_PATH="${OSD_PATH_BASE}-${OSD_ID}"
