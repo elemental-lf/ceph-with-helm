@@ -36,6 +36,17 @@ if ! ceph --cluster "${CLUSTER}" osd crush rule ls | grep -q "^same_host$"; then
   ceph --cluster "${CLUSTER}" osd crush rule create-simple same_host default osd
 fi
 
+# Ensure standard device classes exist and create replicated rules for them
+for class in hdd ssd nvme; do
+  # "ceph osd crush class create" also returns success if the class already exists
+  ceph --cluster "${CLUSTER}" osd crush class create ${class}
+
+  if ! ceph --cluster "${CLUSTER}" osd crush rule ls | grep -q "^replicated_rule_${class}$"; then
+    # We ignore errors as there might not be any devices of a specific class present at all.
+    ceph --cluster "${CLUSTER}" osd crush rule create-replicated replicated_rule_${class} default host ${class} || true
+  fi
+done
+
 function create_pool () {
   POOL_APPLICATION="$1"
   POOL_NAME="$2"
