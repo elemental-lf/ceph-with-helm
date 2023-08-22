@@ -12,9 +12,9 @@ dependencies:
     releasesFrom:
       githubTags:
         source: ceph/ceph
-    version: "17.2.*"
+    version: "18.2.*"
   kubernetes:
     releasesFrom:
       githubReleases:
         source: kubernetes/kubernetes
-    version: "~ 1.25.0"
+    version: "~ 1.26.0"
