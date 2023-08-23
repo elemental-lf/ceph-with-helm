@@ -31,18 +31,18 @@ images:
   image_pull_secrets: []
   tags:
     # See https://quay.io/repository/ceph/ceph?tab=tags
-    ceph_bootstrap:          'ghcr.io/elemental-lf/ceph:17.2.6-k8s-1.25.9-rev-1'
-    ceph_mon:                'ghcr.io/elemental-lf/ceph:17.2.6-k8s-1.25.9-rev-1'
-    ceph_osd:                'ghcr.io/elemental-lf/ceph:17.2.6-k8s-1.25.9-rev-1'
-    ceph_mgr:                'ghcr.io/elemental-lf/ceph:17.2.6-k8s-1.25.9-rev-1'
-    ceph_mds:                'ghcr.io/elemental-lf/ceph:17.2.6-k8s-1.25.9-rev-1'
-    ceph_rgw:                'ghcr.io/elemental-lf/ceph:17.2.6-k8s-1.25.9-rev-1'
+    ceph_bootstrap:          'ghcr.io/elemental-lf/ceph:18.2.0-k8s-1.26.7-rev-1'
+    ceph_mon:                'ghcr.io/elemental-lf/ceph:18.2.0-k8s-1.26.7-rev-1'
+    ceph_osd:                'ghcr.io/elemental-lf/ceph:18.2.0-k8s-1.26.7-rev-1'
+    ceph_mgr:                'ghcr.io/elemental-lf/ceph:18.2.0-k8s-1.26.7-rev-1'
+    ceph_mds:                'ghcr.io/elemental-lf/ceph:18.2.0-k8s-1.26.7-rev-1'
+    ceph_rgw:                'ghcr.io/elemental-lf/ceph:18.2.0-k8s-1.26.7-rev-1'
     #
     ceph_cephfs_provisioner: 'docker.io/elementalnet/cephfs-provisioner:0.8.0'
     ceph_rbd_provisioner:    'docker.io/elementalnet/rbd-provisioner:0.8.0'
     #
     dep_check: 'quay.io/airshipit/kubernetes-entrypoint:v1.0.0'
-    ceph_config_helper: 'ghcr.io/elemental-lf/ceph:17.2.6-k8s-1.25.9-rev-1'
+    ceph_config_helper: 'ghcr.io/elemental-lf/ceph:18.2.0-k8s-1.26.7-rev-1'
     ceph_osd_operator: 'ghcr.io/elemental-lf/ceph-osd-operator:0.6.0'
   local_registry:
     active: false
