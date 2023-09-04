@@ -66,7 +66,7 @@ function create_pool () {
       ceph --cluster "${CLUSTER}" osd pool create --pg-num-min "${PG_NUM_MIN}" "${POOL_NAME}" ${POOL_PLACEMENT_GROUPS} ${POOL_PLACEMENT_GROUPS} erasure ${POOL_NAME}
     fi
     while [ $(ceph --cluster "${CLUSTER}" -s | grep creating -c) -gt 0 ]; do echo -n .;sleep 1; done
-    if [ "x${POOL_NAME}" == "xrbd" ]; then
+    if [ "x${POOL_APPLICATION}" == "xrbd" ]; then
       rbd --cluster "${CLUSTER}" pool init ${POOL_NAME}
     fi
     ceph --cluster "${CLUSTER}" osd pool application enable "${POOL_NAME}" "${POOL_APPLICATION}"
