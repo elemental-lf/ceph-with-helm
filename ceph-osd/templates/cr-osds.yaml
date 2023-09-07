@@ -157,7 +157,7 @@ spec:
             command:
              - /tmp/osd-check.sh
              - liveness
-           initialDelaySeconds: 120
+           initialDelaySeconds: {{ .Values.conf.osd.liveness_probe.initial_delay | default 0 }}
            periodSeconds: 60
           readinessProbe:
            exec:
