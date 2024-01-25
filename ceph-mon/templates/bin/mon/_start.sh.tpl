@@ -49,6 +49,14 @@ function get_mon_config {
   monmaptool --create ${monmap_add} --fsid ${fsid} "${MONMAP}" --clobber
 }
 
+wait_on_file() {
+  local -r file="$1"
+
+  until [[ ! -f "$file" ]]; do
+    sleep 1
+  done
+}
+
 get_mon_config
 
 if [ ! -e ${MON_KEYRING}.seed ]; then
@@ -63,6 +71,8 @@ for KEYRING in ${OSD_BOOTSTRAP_KEYRING} ${MDS_BOOTSTRAP_KEYRING} ${RGW_BOOTSTRAP
   ceph-authtool ${MON_KEYRING} --import-keyring ${KEYRING}
 done
 
+wait_on_file "${MON_DATA_DIR}/wait-before-mon-init"
+
 # If we don't have a monitor keyring, this is a new monitor
 if [ ! -e "${MON_DATA_DIR}/keyring" ]; then
   if [ ! -e ${MONMAP} ]; then
@@ -76,6 +86,8 @@ else
   ceph-mon --setuser ceph --setgroup ceph --cluster "${CLUSTER}" -i ${MON_NAME} --inject-monmap ${MONMAP} --keyring ${MON_KEYRING} --mon-data "${MON_DATA_DIR}"
   timeout $[$TIMEOUT * 2] ceph --cluster "${CLUSTER}" mon add "${MON_NAME}" "${MON_IP}" || true
 fi
+
+wait_on_file "${MON_DATA_DIR}/wait-before-mon-start"
 
 # start MON
 exec /usr/bin/ceph-mon \
